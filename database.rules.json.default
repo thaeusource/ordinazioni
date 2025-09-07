@@ -1,0 +1,16 @@
+{
+  "rules": {
+    "orders": {
+      ".read": true,
+      ".write": true
+    },
+    "menu": {
+      ".read": true,
+      ".write": false
+    },
+    "config": {
+      ".read": true,
+      ".write": false
+    }
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "rules": {
+    "orders": {
+      ".read": true,
+      ".write": true,
+      "$orderId": {
+        ".validate": "newData.hasChildren(['customerNumber', 'station', 'items', 'total', 'status'])"
+      }
+    },
+    "orderStatus": {
+      ".read": true,
+      ".write": true
+    },
+    ".read": false,
+    ".write": false
+  }
+}
