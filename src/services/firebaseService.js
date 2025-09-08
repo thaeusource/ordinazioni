@@ -9,7 +9,8 @@ import {
   deleteDoc,
   serverTimestamp,
   where,
-  getDocs
+  getDocs,
+  setDoc
 } from 'firebase/firestore';
 import { ref, push, onValue, update, off } from 'firebase/database';
 import { db, rtdb } from '../firebase/config';

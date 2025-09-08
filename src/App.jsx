@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Minus, Printer, Check, Settings, RefreshCw } from 'lucide-react';
+import { Settings, RefreshCw } from 'lucide-react';
 import { firebaseService } from './services/firebaseService';
+import CassaView from './components/CassaView.jsx';
+import KitchenView from './components/KitchenView';
+import ConfigView from './components/ConfigView';
 import './App.css';
 
 const App = () => {
@@ -194,176 +197,6 @@ Ritira alle cucine indicate
     );
   }
 
-  const CassaView = () => (
-    <div className="main-content">
-      <div className="section-header">
-        <h2>Cassa - Stazione {currentStation}</h2>
-        <select 
-          value={currentStation} 
-          onChange={(e) => setCurrentStation(parseInt(e.target.value))}
-          className="station-select"
-        >
-          <option value={1}>Stazione 1</option>
-          <option value={2}>Stazione 2</option>
-          <option value={3}>Stazione 3</option>
-        </select>
-      </div>
-
-      <div className="cassa-grid">
-        {/* Menu */}
-        <div className="menu-section">
-          <h3>Menu</h3>
-          <div className="menu-list">
-            {menu.map(item => (
-              <div key={item.id} className={`menu-item ${item.available <= 0 ? 'disabled' : ''}`}>
-                <div className="menu-item-content">
-                  <div className="menu-item-info">
-                    <div className="category-indicator">
-                      <div 
-                        className="category-dot"
-                        style={{ backgroundColor: item.categoryColor }}
-                      ></div>
-                      <span className="item-name">{item.name}</span>
-                    </div>
-                    <div className="item-details">
-                      {item.category} - Linea: {item.preparationLine}
-                    </div>
-                    <div className="item-price">
-                      €{item.price.toFixed(2)} - Disponibili: {item.available}
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => addToCart(item)}
-                    disabled={item.available <= 0}
-                    className={`add-button ${item.available <= 0 ? 'disabled' : ''}`}
-                  >
-                    <Plus size={16} />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Cart */}
-        <div className="cart-section">
-          <h3>Carrello - Cliente #{customerNumber}</h3>
-          <div className="cart-content">
-            {cart.length === 0 ? (
-              <p className="empty-cart">Carrello vuoto</p>
-            ) : (
-              <>
-                <div className="cart-items">
-                  {cart.map(item => (
-                    <div key={item.id} className="cart-item">
-                      <div className="cart-item-info">
-                        <span className="cart-item-name">{item.name}</span>
-                        <div className="cart-item-price">
-                          €{item.price.toFixed(2)} x {item.quantity}
-                        </div>
-                      </div>
-                      <div className="cart-controls">
-                        <button
-                          onClick={() => removeFromCart(item.id)}
-                          className="cart-button remove"
-                        >
-                          <Minus size={14} />
-                        </button>
-                        <span className="quantity">{item.quantity}</span>
-                        <button
-                          onClick={() => addToCart(item)}
-                          className="cart-button add"
-                        >
-                          <Plus size={14} />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <div className="cart-total">
-                  <div className="total-price">
-                    <span>Totale:</span>
-                    <span>€{getTotalPrice()}</span>
-                  </div>
-                  <button
-                    onClick={processOrder}
-                    className="checkout-button"
-                  >
-                    <Printer size={20} />
-                    Stampa Scontrino
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const KitchenView = (lineId) => {
-    const line = lines.find(l => l.id === lineId);
-    if (!line) return <div>Linea non trovata</div>;
-
-    const lineOrders = orders.filter(order => 
-      order.status === 'pending' && 
-      order.items && 
-      order.items.some(item => item.preparationLine === lineId)
-    );
-
-    return (
-      <div className="main-content">
-        <div className="kitchen-header">
-          <h2 style={{ color: line.color }}>
-            {line.name}
-          </h2>
-          <div className="orders-count">
-            Ordini in coda: {lineOrders.length}
-          </div>
-        </div>
-
-        <div className="orders-grid">
-          {lineOrders.map(order => (
-            <div key={order.id} className="order-card">
-              <div className="order-header">
-                <span className="order-number">#{order.customerNumber}</span>
-                <span className="order-station">
-                  Stazione {order.station}
-                </span>
-              </div>
-              <div className="order-time">
-                {order.createdAt ? new Date(order.createdAt).toLocaleTimeString('it-IT') : 'N/A'}
-              </div>
-              <div className="order-items">
-                {order.items
-                  .filter(item => item.preparationLine === lineId)
-                  .map((item, index) => (
-                    <div key={index} className="order-item">
-                      <span>{item.name}</span>
-                      <span className="item-quantity">x{item.quantity}</span>
-                    </div>
-                  ))}
-              </div>
-              <button
-                onClick={() => completeOrder(order.id)}
-                className="complete-button"
-              >
-                <Check size={16} />
-                Completato
-              </button>
-            </div>
-          ))}
-        </div>
-
-        {lineOrders.length === 0 && (
-          <div className="empty-orders">
-            <p>Nessun ordine in coda</p>
-          </div>
-        )}
-      </div>
-    );
-  };
-
   return (
     <div className="app">
       {/* Navigation */}
@@ -402,32 +235,35 @@ Ritira alle cucine indicate
 
       {/* Content */}
       <main>
-        {currentView === 'cassa' && <CassaView />}
-        {lines.find(l => l.id === currentView) && KitchenView(currentView)}
+        {currentView === 'cassa' && (
+          <CassaView 
+            currentStation={currentStation}
+            setCurrentStation={setCurrentStation}
+            menu={menu}
+            cart={cart}
+            customerNumber={customerNumber}
+            addToCart={addToCart}
+            removeFromCart={removeFromCart}
+            getTotalPrice={getTotalPrice}
+            processOrder={processOrder}
+          />
+        )}
+        
+        {lines.find(l => l.id === currentView) && (
+          <KitchenView 
+            lineId={currentView}
+            lines={lines}
+            orders={orders}
+            completeOrder={completeOrder}
+          />
+        )}
+        
         {currentView === 'config' && (
-          <div className="main-content">
-            <h2>Configurazione</h2>
-            <div className="config-content">
-              <p>
-                Sezione di configurazione per menu, linee di produzione e impostazioni.
-                Da implementare con interfaccia per modificare menu, prezzi, disponibilità, ecc.
-              </p>
-              <div className="config-stats">
-                <div className="stat-card">
-                  <h4>Menu Items</h4>
-                  <p>{menu.length} piatti configurati</p>
-                </div>
-                <div className="stat-card">
-                  <h4>Linee Produzione</h4>
-                  <p>{lines.length} linee attive</p>
-                </div>
-                <div className="stat-card">
-                  <h4>Ordini Oggi</h4>
-                  <p>{orders.length} ordini totali</p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <ConfigView 
+            menu={menu}
+            lines={lines}
+            orders={orders}
+          />
         )}
       </main>
     </div>
