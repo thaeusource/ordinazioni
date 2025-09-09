@@ -1,7 +1,9 @@
-import React from 'react';
-import { Check } from 'lucide-react';
+import React, { useState } from 'react';
+import { Check, Eye, EyeOff, Clock, CheckCircle } from 'lucide-react';
 
 const KitchenView = ({ lineId, lines, orders, completeOrder }) => {
+  const [showCompleted, setShowCompleted] = useState(false);
+  
   const line = lines.find(l => l.id === lineId);
   
   if (!line) {
@@ -14,11 +16,19 @@ const KitchenView = ({ lineId, lines, orders, completeOrder }) => {
     );
   }
 
-  const lineOrders = orders.filter(order => 
+  const pendingOrders = orders.filter(order => 
     order.status === 'pending' && 
     order.items && 
     order.items.some(item => item.preparationLine === lineId)
   );
+
+  const completedOrders = orders.filter(order => 
+    order.status === 'completed' && 
+    order.items && 
+    order.items.some(item => item.preparationLine === lineId)
+  );
+
+  const displayOrders = showCompleted ? completedOrders : pendingOrders;
 
   return (
     <div className="main-content">
@@ -26,22 +36,55 @@ const KitchenView = ({ lineId, lines, orders, completeOrder }) => {
         <h2 style={{ color: line.color }}>
           {line.name}
         </h2>
-        <div className="orders-count">
-          Ordini in coda: {lineOrders.length}
+        <div className="kitchen-controls">
+          <div className="orders-count">
+            {showCompleted ? 'Completati' : 'In coda'}: {displayOrders.length}
+          </div>
+          <button
+            onClick={() => setShowCompleted(!showCompleted)}
+            className={`toggle-button ${showCompleted ? 'showing-completed' : 'showing-pending'}`}
+          >
+            {showCompleted ? (
+              <>
+                <Clock size={16} />
+                Mostra in Coda ({pendingOrders.length})
+              </>
+            ) : (
+              <>
+                <CheckCircle size={16} />
+                Mostra Completati ({completedOrders.length})
+              </>
+            )}
+          </button>
         </div>
       </div>
 
       <div className="orders-grid">
-        {lineOrders.map(order => (
-          <div key={order.id} className="order-card">
+        {displayOrders.map(order => (
+          <div key={order.id} className={`order-card ${showCompleted ? 'completed' : 'pending'}`}>
             <div className="order-header">
               <span className="order-number">#{order.customerNumber}</span>
-              <span className="order-station">
-                Stazione {order.station}
-              </span>
+              <div className="order-info">
+                <span className="order-station">
+                  Stazione {order.station}
+                </span>
+                {showCompleted && (
+                  <span className="completed-badge">
+                    <CheckCircle size={14} />
+                    Completato
+                  </span>
+                )}
+              </div>
             </div>
             <div className="order-time">
-              {order.createdAt ? new Date(order.createdAt).toLocaleTimeString('it-IT') : 'N/A'}
+              <div>
+                <strong>Ordinato:</strong> {order.createdAt ? new Date(order.createdAt).toLocaleTimeString('it-IT') : 'N/A'}
+              </div>
+              {showCompleted && order.updatedAt && (
+                <div>
+                  <strong>Completato:</strong> {new Date(order.updatedAt).toLocaleTimeString('it-IT')}
+                </div>
+              )}
             </div>
             <div className="order-items">
               {order.items
@@ -53,20 +96,32 @@ const KitchenView = ({ lineId, lines, orders, completeOrder }) => {
                   </div>
                 ))}
             </div>
-            <button
-              onClick={() => completeOrder(order.id)}
-              className="complete-button"
-            >
-              <Check size={16} />
-              Completato
-            </button>
+            
+            {!showCompleted ? (
+              <button
+                onClick={() => completeOrder(order.id)}
+                className="complete-button"
+              >
+                <Check size={16} />
+                Completato
+              </button>
+            ) : (
+              <div className="order-total">
+                <span>Totale ordine: €{order.total?.toFixed(2) || 'N/A'}</span>
+              </div>
+            )}
           </div>
         ))}
       </div>
 
-      {lineOrders.length === 0 && (
+      {displayOrders.length === 0 && (
         <div className="empty-orders">
-          <p>Nessun ordine in coda</p>
+          <p>
+            {showCompleted 
+              ? 'Nessun ordine completato per questa linea' 
+              : 'Nessun ordine in coda'
+            }
+          </p>
         </div>
       )}
     </div>
