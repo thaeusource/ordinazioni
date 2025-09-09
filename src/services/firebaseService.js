@@ -95,6 +95,16 @@ export class FirebaseService {
     }
   }
 
+  async deleteMenuItem(itemId) {
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.MENU, itemId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting menu item:', error);
+      return false;
+    }
+  }
+
   // ============ ORDER MANAGEMENT ============
   
   async createOrder(orderData) {
