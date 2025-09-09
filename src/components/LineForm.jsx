@@ -8,7 +8,6 @@ const LineForm = ({ line, onSave, onCancel }) => {
     color: '#FF6B6B',
     order: 0,
     active: true,
-    printer: ''
   });
   
   const handleSubmit = (e) => {
@@ -62,16 +61,6 @@ const LineForm = ({ line, onSave, onCancel }) => {
             min="0"
             value={formData.order}
             onChange={(e) => setFormData({...formData, order: parseInt(e.target.value) || 0})}
-          />
-        </div>
-        
-        <div className="form-group">
-          <label>Stampante</label>
-          <input
-            type="text"
-            value={formData.printer}
-            onChange={(e) => setFormData({...formData, printer: e.target.value})}
-            placeholder="es: thermal-printer-1"
           />
         </div>
         

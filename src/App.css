@@ -295,10 +295,10 @@
     grid-template-columns: 2fr 1fr 0.5fr 1fr;
   }
   
-  .table-header span:nth-child(3),
-  .table-header span:nth-child(5),
-  .table-row span:nth-child(3),
-  .table-row span:nth-child(5) {
+  .table-header span:nth-child(2),
+  .table-header span:nth-child(4),
+  .table-row span:nth-child(2),
+  .table-row span:nth-child(4) {
     display: none;
   }
 }

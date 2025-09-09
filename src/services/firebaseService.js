@@ -415,7 +415,6 @@ export class FirebaseService {
           color: '#FF6B6B',
           order: 1,
           active: true,
-          printer: 'thermal-printer-1'
         },
         { 
           id: 'dolce', 
@@ -423,7 +422,6 @@ export class FirebaseService {
           color: '#4ECDC4',
           order: 2,
           active: true,
-          printer: 'thermal-printer-2'
         },
         { 
           id: 'bevande', 
@@ -431,13 +429,12 @@ export class FirebaseService {
           color: '#45B7D1',
           order: 3,
           active: true,
-          printer: 'thermal-printer-3'
         }
       ];
 
       // Add lines
       for (const line of defaultLines) {
-        await addDoc(collection(db, COLLECTIONS.LINES), line);
+        await this.addLine(line);
       }
 
       // Default configuration
@@ -445,7 +442,7 @@ export class FirebaseService {
         stations: [
           { id: 1, name: 'Cassa 1', active: true },
           { id: 2, name: 'Cassa 2', active: true },
-          { id: 3, name: 'Cassa 3', active: false }
+          { id: 3, name: 'Cassa 3', active: true }
         ]
       };
 

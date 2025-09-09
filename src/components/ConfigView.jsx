@@ -222,7 +222,7 @@ const ConfigView = ({ menu, lines, orders }) => {
             <span>ID</span>
             <span>Colore</span>
             <span>Ordine</span>
-            <span>Stampante</span>
+            <span>Stato</span>
             <span>Azioni</span>
           </div>
           {lines.map(line => (
@@ -253,7 +253,7 @@ const ConfigView = ({ menu, lines, orders }) => {
                     ></div>
                   </span>
                   <span>{line.order}</span>
-                  <span>{line.printer || 'N/A'}</span>
+                  <span>{line.active ? 'Attiva' : 'Inattiva'}</span>
                   <span className="actions">
                     <button 
                       onClick={() => setEditingLine(line)}
