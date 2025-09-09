@@ -95,7 +95,7 @@ export class FirebaseService {
     }
   }
 
-  async deleteMenuItem(itemId) {
+    async deleteMenuItem(itemId) {
     try {
       await deleteDoc(doc(db, COLLECTIONS.MENU, itemId));
       return true;
@@ -134,6 +134,45 @@ export class FirebaseService {
     }
   }
 
+  async updateOrderStatus(orderId, status) {
+    try {
+      // Update in Firestore
+      const orderRef = doc(db, COLLECTIONS.ORDERS, orderId);
+      await updateDoc(orderRef, {
+        status,
+        updatedAt: serverTimestamp()
+      });
+      
+      // Update in Real-time Database
+      const rtRef = ref(rtdb, `${RT_PATHS.ORDERS}/${orderId}`);
+      await update(rtRef, {
+        status,
+        updatedAt: Date.now()
+      });
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      return false;
+    }
+  }
+  
+  async deleteOrder(orderId) {
+    try {
+      // Delete from Firestore
+      await deleteDoc(doc(db, COLLECTIONS.ORDERS, orderId));
+      
+      // Delete from Real-time Database
+      const rtRef = ref(rtdb, `${RT_PATHS.ORDERS}/${orderId}`);
+      await update(rtRef, null);
+      
+      return true;
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      return false;
+    }
+  }
+
   subscribeToOrders(callback) {
     const ordersRef = ref(rtdb, RT_PATHS.ORDERS);
     
@@ -151,45 +190,6 @@ export class FirebaseService {
     });
 
     return () => off(ordersRef, 'value', unsubscribe);
-  }
-
-  async updateOrderStatus(orderId, status) {
-    try {
-      // Update in Firestore
-      const orderRef = doc(db, COLLECTIONS.ORDERS, orderId);
-      await updateDoc(orderRef, {
-        status,
-        updatedAt: serverTimestamp()
-      });
-
-      // Update in Real-time Database
-      const rtRef = ref(rtdb, `${RT_PATHS.ORDERS}/${orderId}`);
-      await update(rtRef, {
-        status,
-        updatedAt: Date.now()
-      });
-
-      return true;
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      return false;
-    }
-  }
-
-  async deleteOrder(orderId) {
-    try {
-      // Delete from Firestore
-      await deleteDoc(doc(db, COLLECTIONS.ORDERS, orderId));
-      
-      // Delete from Real-time Database
-      const rtRef = ref(rtdb, `${RT_PATHS.ORDERS}/${orderId}`);
-      await update(rtRef, null);
-
-      return true;
-    } catch (error) {
-      console.error('Error deleting order:', error);
-      return false;
-    }
   }
 
   // ============ CONFIGURATION ============
@@ -253,6 +253,45 @@ export class FirebaseService {
     } catch (error) {
       console.error('Error getting lines:', error);
       return [];
+    }
+  }
+
+  async addLine(line) {
+    try {
+      const lineRef = doc(db, COLLECTIONS.LINES, line.id);
+      await setDoc(lineRef, {
+        ...line,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp()
+      });
+      return line.id;
+    } catch (error) {
+      console.error('Error adding line:', error);
+      return null;
+    }
+  }
+
+  async updateLine(lineId, updates) {
+    try {
+      const lineRef = doc(db, COLLECTIONS.LINES, lineId);
+      await updateDoc(lineRef, {
+        ...updates,
+        updatedAt: serverTimestamp()
+      });
+      return true;
+    } catch (error) {
+      console.error('Error updating line:', error);
+      return false;
+    }
+  }
+
+  async deleteLine(lineId) {
+    try {
+      await deleteDoc(doc(db, COLLECTIONS.LINES, lineId));
+      return true;
+    } catch (error) {
+      console.error('Error deleting line:', error);
+      return false;
     }
   }
 
