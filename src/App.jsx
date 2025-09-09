@@ -160,7 +160,7 @@ Ritira alle cucine indicate
     
     // Try to use browser print API
     const printWindow = window.open('', '_blank');
-    printWindow.document.write(`
+    printWindow.document.body.innerHTML = `
       <html>
         <head>
           <title>Scontrino #${order.customerNumber}</title>
@@ -174,7 +174,7 @@ Ritira alle cucine indicate
           <pre>${receiptContent}</pre>
         </body>
       </html>
-    `);
+    `;
     printWindow.document.close();
     printWindow.print();
     printWindow.close();
