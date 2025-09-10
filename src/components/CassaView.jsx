@@ -15,15 +15,15 @@ const CassaView = ({
   return (
     <div className="main-content">
       <div className="section-header">
-        <h2>Cassa - Stazione {currentStation}</h2>
+        <h2>Cassa {currentStation}</h2>
         <select 
           value={currentStation} 
           onChange={(e) => setCurrentStation(parseInt(e.target.value))}
           className="station-select"
         >
-          <option value={1}>Stazione 1</option>
-          <option value={2}>Stazione 2</option>
-          <option value={3}>Stazione 3</option>
+          <option value={1}>Cassa 1</option>
+          <option value={2}>Cassa 2</option>
+          <option value={3}>Cassa 3</option>
         </select>
       </div>
 
@@ -44,7 +44,9 @@ const CassaView = ({
                       <span className="item-name">{item.name}</span>
                     </div>
                     <div className="item-details">
-                      {item.category} - Linea: {item.preparationLine}
+                      {item.description && (
+                        <span className="item-description">{item.description}</span>
+                      )}
                     </div>
                     <div className="item-price">
                       €{item.price.toFixed(2)} - Disponibili: {item.available}
