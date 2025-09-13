@@ -329,40 +329,64 @@ export class FirebaseService {
       // Default menu items
       const defaultMenu = [
         {
-          name: 'Pasta al pomodoro',
-          category: 'Primi',
+          name: 'Hot dog',
+          category: 'Salato',
           categoryColor: '#FF6B6B',
           preparationLine: 'salato',
           price: 8.50,
-          maxQuantity: 50,
-          currentQuantity: 50,
+          maxQuantity: 150,
+          currentQuantity: 150,
           active: true,
           allergens: ['glutine'],
-          description: 'Pasta fresca con pomodoro e basilico'
+          description: 'Hot dog con wurstel, senape e crauti.'
         },
         {
-          name: 'Risotto ai funghi',
-          category: 'Primi',
+          name: 'Panino con salamella',
+          category: 'Salato',
           categoryColor: '#FF6B6B',
           preparationLine: 'salato',
           price: 9.00,
-          maxQuantity: 30,
-          currentQuantity: 30,
+          maxQuantity: 500,
+          currentQuantity: 500,
           active: true,
           allergens: ['glutine'],
-          description: 'Risotto cremoso con funghi porcini'
+          description: 'Panino con salamella alla griglia. Cipolla e salse a piacimento.'
         },
         {
-          name: 'Tiramisù',
+          name: 'Couscous con verdure',
+          category: 'Salato',
+          categoryColor: '#FF6B6B',
+          preparationLine: 'salato',
+          price: 9.00,
+          maxQuantity: 150,
+          currentQuantity: 150,
+          active: true,
+          allergens: ['glutine'],
+          description: 'Couscous con verdure.'
+        },
+        {
+          name: 'Panino con tomino alla griglia',
+          category: 'Salato',
+          categoryColor: '#FF6B6B',
+          preparationLine: 'salato',
+          price: 9.00,
+          maxQuantity: 70,
+          currentQuantity: 70,
+          active: true,
+          allergens: ['glutine'],
+          description: 'Panino con tomino alla griglia. Cipolla e salse a piacimento.'
+        },
+        {
+          name: 'Waffle',
           category: 'Dolci',
           categoryColor: '#4ECDC4',
           preparationLine: 'dolce',
           price: 5.00,
-          maxQuantity: 25,
-          currentQuantity: 25,
+          maxQuantity: 200,
+          currentQuantity: 200,
           active: true,
           allergens: ['uova', 'lattosio'],
-          description: 'Tiramisù fatto in casa'
+          description: 'Waffle caldo con Nutella e panna montata.'
         },
         {
           name: 'Panna cotta',
@@ -377,7 +401,7 @@ export class FirebaseService {
           description: 'Panna cotta ai frutti di bosco'
         },
         {
-          name: 'Acqua',
+          name: 'Acqua naturale 50cl',
           category: 'Bevande',
           categoryColor: '#45B7D1',
           preparationLine: 'bevande',
@@ -389,7 +413,19 @@ export class FirebaseService {
           description: 'Acqua naturale 50cl'
         },
         {
-          name: 'Vino rosso',
+          name: 'Acqua frizzante 50cl',
+          category: 'Bevande',
+          categoryColor: '#45B7D1',
+          preparationLine: 'bevande',
+          price: 1.50,
+          maxQuantity: 100,
+          currentQuantity: 100,
+          active: true,
+          allergens: [],
+          description: 'Acqua frizzante 50cl'
+        },
+        {
+          name: 'Birra in lattina 33cl',
           category: 'Bevande',
           categoryColor: '#45B7D1',
           preparationLine: 'bevande',
@@ -397,8 +433,8 @@ export class FirebaseService {
           maxQuantity: 50,
           currentQuantity: 50,
           active: true,
-          allergens: ['solfiti'],
-          description: 'Vino rosso locale'
+          allergens: ['glutine'],
+          description: 'Birra in lattina 33cl'
         }
       ];
 

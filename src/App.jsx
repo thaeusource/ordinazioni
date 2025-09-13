@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Settings, RefreshCw } from 'lucide-react';
 import { firebaseService } from './services/firebaseService';
+import { createPrintService, getPrintService } from './services/printService';
 import CassaView from './components/CassaView.jsx';
 import KitchenView from './components/KitchenView';
 import ConfigView from './components/ConfigView';
@@ -15,6 +16,28 @@ const App = () => {
   const [lines, setLines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [customerNumber, setCustomerNumber] = useState(1);
+  
+  // Configurazione Print Server
+  const [printServerConfig, setPrintServerConfig] = useState({
+    host: 'localhost',
+    port: '3001',
+    enabled: true
+  });
+
+  // Inizializza Print Service
+  useEffect(() => {
+    const printConfig = {
+      baseUrl: `http://${printServerConfig.host}:${printServerConfig.port}`,
+      receiptConfig: {
+        title: 'FESTA DELLA PARROCCHIA',
+        footer: 'Ritira alle cucine indicate',
+        width: 32,
+        currency: 'EUR'
+      }
+    };
+    
+    createPrintService(printConfig);
+  }, [printServerConfig]);
 
   // Initialize Firebase data and subscriptions
   useEffect(() => {
@@ -140,7 +163,37 @@ const App = () => {
     }
   };
 
-  const printReceipt = (order) => {
+  const printReceipt = async (order) => {
+    console.log('STAMPA SCONTRINO - Cliente #' + order.customerNumber);
+    
+    // Se print server è abilitato, prova a usare il nuovo servizio
+    if (printServerConfig.enabled) {
+      try {
+        const printService = getPrintService();
+        
+        // Prepara dati ordine per il nuovo formato
+        const orderData = {
+          customerNumber: order.customerNumber.toString(),
+          station: `Stazione ${order.station}`,
+          items: order.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price // Mantieni formato euro (non centesimi)
+          })),
+          total: order.total
+        };
+        
+        // Usa il nuovo metodo del servizio di stampa
+        await printService.printOrderReceipt(orderData);
+        console.log('✅ Scontrino stampato tramite nuovo print service');
+        return; // Stampa riuscita, esci
+        
+      } catch (error) {
+        console.warn('⚠️ Errore print service:', error.message, '- uso browser print');
+      }
+    }
+    
+    // Fallback: browser print (invariato)
     const receiptContent = `
 === SAGRA PARROCCHIA ===
 Numero: ${order.customerNumber}
@@ -155,10 +208,7 @@ TOTALE: €${order.total.toFixed(2)}
 ${'='.repeat(25)}
 Ritira alle cucine indicate
     `.trim();
-
-    console.log('STAMPA SCONTRINO:', receiptContent);
     
-    // Try to use browser print API
     const printWindow = window.open('', '_blank');
     printWindow.document.body.innerHTML = `
       <html>
@@ -263,6 +313,8 @@ Ritira alle cucine indicate
             menu={menu}
             lines={lines}
             orders={orders}
+            printServerConfig={printServerConfig}
+            setPrintServerConfig={setPrintServerConfig}
           />
         )}
       </main>

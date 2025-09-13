@@ -1,0 +1,18 @@
+{
+  "name": "thermal-print-server",
+  "version": "1.0.0",
+  "description": "Print server per stampante termica Qian QOP-T80UL-RI-02",
+  "main": "src/print-server.js",
+  "scripts": {
+    "start": "node src/print-server.js",
+    "test": "curl -X POST http://localhost:3001/test",
+    "install-deps": "node scripts/install.sh",
+    "quick-start": "node scripts/start.sh"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "keywords": ["thermal", "printer", "receipt", "escpos", "qian"],
+  "author": "Print Server",
+  "license": "MIT"
+}

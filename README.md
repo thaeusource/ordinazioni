@@ -2,6 +2,64 @@
 
 Sistema completo per la gestione delle ordinazioni durante sagre e feste parrocchiali.
 
+
+## 📁 Struttura del Progetto
+
+La struttura attuale del progetto è la seguente:
+
+```text
+ordinazioni/
+├── src/
+│   ├── main.jsx               # Entry point principale React
+│   ├── App.jsx                # Componente principale React
+│   ├── App.css                # Stili principali
+│   ├── index.css              # Stili globali
+│   ├── components/
+│   │   ├── CassaView.jsx      # UI cassa e gestione carrello
+│   │   ├── ConfigView.jsx     # UI configurazione e dashboard
+│   │   ├── KitchenView.jsx    # UI cucine per ordini
+│   │   ├── MenuItemForm.jsx   # Form per aggiungere menu items
+│   │   ├── LineForm.jsx       # Form per gestire linee di preparazione
+│   │   └── PrintTestComponent.jsx # Componente test sistema stampa
+│   ├── services/
+│   │   ├── firebaseService.js # Funzioni per Firestore/RTDB
+│   │   ├── printService.js    # Servizio comunicazione print server
+│   │   └── receiptGenerator.js # Generatore ricevute ESC/POS
+│   ├── firebase/
+│   │   └── config.js          # Configurazione Firebase
+│   └── assets/                # Risorse statiche
+├── public/                    # File pubblici statici
+├── print-server/              # Print server standalone per stampanti USB
+│   ├── print-server.js        # Server Node.js generico ESC/POS
+│   ├── config-manager.js      # Gestione configurazione
+│   ├── print-manager.js       # Gestione stampa cross-platform
+│   ├── escpos-commands.js     # Libreria comandi ESC/POS
+│   ├── config.json            # Configurazione runtime
+│   ├── config.template.json   # Template configurazione
+│   ├── package.json           # Dipendenze print server
+│   ├── install.bat           # Auto-installer Windows
+│   ├── install.sh            # Auto-installer Unix/macOS/Linux
+│   ├── start.bat             # Script avvio Windows
+│   ├── start.sh              # Script avvio Unix/macOS/Linux
+│   └── README.md             # Documentazione print server
+├── dist/                      # Build di produzione (generata)
+├── .firebase/                 # Cache Firebase (generata)
+├── package.json               # Dipendenze e script
+├── package-lock.json          # Lock file dipendenze
+├── vite.config.js             # Configurazione Vite
+├── tailwind.config.js         # Configurazione Tailwind CSS
+├── eslint.config.js           # Configurazione ESLint
+├── index.html                 # Template HTML principale
+├── firebase.json              # Configurazione Firebase
+├── firestore.rules            # Regole di sicurezza Firestore
+├── firestore.indexes.json     # Indici Firestore
+├── database.rules.json        # Regole Realtime Database
+├── .env                       # Variabili ambiente Firebase
+├── .firebaserc                # Configurazione progetti Firebase
+├── .gitignore                 # File ignorati da Git
+└── README.md                  # Documentazione
+```
+
 ## 🚀 Quick Start
 
 ### 1. Setup del Progetto
@@ -106,7 +164,82 @@ npm run preview
 npm run firebase:deploy
 ```
 
-## 📱 Utilizzo dell'Applicazione
+## �️ Sistema di Stampa Avanzato
+
+### Architettura del Sistema di Stampa
+
+Il sistema di stampa è ora completamente modulare e separato in:
+
+1. **Print Server Generico** (`print-server/`): Server Node.js standalone che gestisce solo la comunicazione con stampanti ESC/POS
+2. **Receipt Generator** (`src/services/receiptGenerator.js`): Modulo React per generare comandi ESC/POS specifici per le ricevute
+3. **Print Service** (`src/services/printService.js`): Servizio React per comunicare con il print server
+
+### API Print Server
+
+#### Endpoint Generici
+- `POST /print-raw` - Stampa comandi ESC/POS grezzi
+- `POST /print-text` - Stampa testo semplice con opzioni
+- `GET /ping` - Verifica connessione
+- `GET /status` - Stato stampante
+- `GET /config` - Configurazione server
+
+#### Endpoint Compatibilità (deprecati)
+- `POST /print-receipt` - Stampa ricevuta (usa internamente /print-raw)
+
+### Utilizzo nel Codice React
+
+```javascript
+import { getPrintService } from './services/printService';
+
+// Stampa ricevuta ordine
+const printService = getPrintService();
+await printService.printOrderReceipt({
+  customerNumber: '123',
+  station: 'Stazione 1',
+  items: [
+    { name: 'Pizza', quantity: 2, price: 8.00 }
+  ],
+  total: 16.00
+});
+
+// Stampa testo semplice
+await printService.printText('Test di stampa', {
+  center: true,
+  bold: true
+});
+
+// Stampa comandi ESC/POS grezzi
+const commands = [0x1B, 0x40, ...]; // Comandi ESC/POS
+await printService.printRawCommands(commands);
+```
+
+### Test di Stampa
+
+L'app include un pannello di test completo accessibile dalla **Configurazione → Stampante**:
+
+- Test connessione server
+- Verifica stato stampante
+- Test testo semplice
+- Test ricevuta completa
+- Test comandi ESC/POS grezzi
+
+### Configurazione Stampante
+
+1. **Installa il print server** su ogni PC cassa
+2. **Configura la stampante** nel file `print-server/config.json`
+3. **Avvia il server** con `npm start` o `./start.sh`
+4. **Testa nell'app** usando i controlli nella sezione Configurazione
+
+### Cross-Platform Support
+
+Il print server supporta:
+- **Windows**: Comando `copy` per stampanti USB/LPT
+- **macOS**: Comando `lp` con CUPS
+- **Linux**: Comando `lp` con CUPS
+
+La configurazione viene automaticamente rilevata e adattata al sistema operativo.
+
+## 🎪 Utilizzo del Sistema
 
 ### Cassa
 - Seleziona stazione (1, 2 o 3)
@@ -181,25 +314,51 @@ npm run firebase:deploy
 
 ## 🖨️ Setup Stampanti Termiche
 
-### Opzione 1: Stampanti USB
-```javascript
-// Integrazione con librerie ESC/POS
-npm install escpos escpos-usb
+Il sistema supporta stampa tramite **Print Server USB standalone** per stampanti termiche come la Qian QOP-T80UL-RI-02.
+
+### Architettura Produzione
+
+```
+Firebase Hosting ──► React App (Web)
+                           │
+                           │ HTTP Request  
+                           ▼
+PC Cassa Locale ──► Print Server ──USB──► Stampante Termica
 ```
 
-### Opzione 2: Stampanti WiFi
-```javascript
-// API Star CloudPRNT o simili
-const printReceipt = async (orderData) => {
-  const response = await fetch('/api/print', {
-    method: 'POST',
-    body: JSON.stringify(orderData)
-  });
-};
+### Setup Print Server
+
+1. **Su ogni PC Cassa**, copia la cartella `print-server/` 
+2. **Installa Node.js** se non presente
+3. **Collega stampante USB** e verifica driver
+4. **Avvia print server**:
+
+```bash
+cd print-server
+npm install     # Solo la prima volta
+npm start       # Avvia server su porta 3001
 ```
 
-### Opzione 3: Browser Printing
-Il sistema include già la funzionalità di stampa browser per scontrini.
+5. **Configura nell'app**: Vai in Configurazione → Stampante e verifica connessione
+
+### Test Funzionamento
+
+- **Health check**: http://localhost:3001/health
+- **Test stampa**: http://localhost:3001/test  
+- **Lista stampanti**: http://localhost:3001/printers
+
+### Opzioni Alternative
+
+#### Opzione 1: Print Server USB (Raccomandato)
+- ✅ Stampa diretta su carta termica
+- ✅ Qualità professionale
+- ✅ Velocità di stampa
+- ✅ Compatibile Qian QOP-T80UL-RI-02
+
+#### Opzione 2: Browser Printing (Fallback)
+- ⚠️ Qualità dipendente da stampante
+- ⚠️ Richiede configurazione manuale
+- ✅ Funziona senza print server
 
 ## 📊 Firebase Security Rules
 

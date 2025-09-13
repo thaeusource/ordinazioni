@@ -1,0 +1,25 @@
+{
+  "server": {
+    "port": 3001,
+    "host": "127.0.0.1",
+    "name": "Generic ESC/POS Print Server",
+    "version": "1.0"
+  },
+  "printer": {
+    "name": "YOUR_PRINTER_NAME_HERE",
+    "type": "thermal",
+    "width": 32,
+    "description": "Thermal Receipt Printer"
+  },
+  "system": {
+    "platform": "auto",
+    "tempDir": "./temp",
+    "cleanupDelay": 10000,
+    "encoding": "utf8"
+  },
+  "logging": {
+    "enabled": true,
+    "level": "info",
+    "requestLogging": true
+  }
+}

@@ -3,12 +3,14 @@ import { Edit2, Trash2, Save, X, PlusCircle } from 'lucide-react';
 import { firebaseService } from '../services/firebaseService';
 import MenuItemForm from './MenuItemForm';
 import LineForm from './LineForm';
+import PrintTestComponent from './PrintTestComponent';
 
-const ConfigView = ({ menu, lines, orders }) => {
+const ConfigView = ({ menu, lines, orders, printServerConfig, setPrintServerConfig }) => {
   const [editingMenuItem, setEditingMenuItem] = useState(null);
   const [editingLine, setEditingLine] = useState(null);
   const [showAddMenuItem, setShowAddMenuItem] = useState(false);
   const [showAddLine, setShowAddLine] = useState(false);
+  const [testingPrintServer, setTestingPrintServer] = useState(false);
 
   // Menu Management Functions
   const handleSaveMenuItem = async (itemData) => {
@@ -89,6 +91,41 @@ const ConfigView = ({ menu, lines, orders }) => {
     }
   };
 
+  // Print Server Functions
+  const testPrintServer = async () => {
+    setTestingPrintServer(true);
+    try {
+      const url = `http://${printServerConfig.host}:${printServerConfig.port}/test`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        alert('✅ Test di stampa inviato! Controlla la stampante.');
+      } else {
+        alert('❌ Print server non risponde. Verifica che sia avviato.');
+      }
+    } catch (error) {
+      alert('❌ Errore connessione print server: ' + error.message);
+    } finally {
+      setTestingPrintServer(false);
+    }
+  };
+
+  const checkPrintServerStatus = async () => {
+    try {
+      const url = `http://${printServerConfig.host}:${printServerConfig.port}/health`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        alert(`✅ Print Server connesso!\nStato: ${data.status}\nStampante: ${data.printer}`);
+      } else {
+        alert('❌ Print server non risponde');
+      }
+    } catch (error) {
+      alert('❌ Print server non raggiungibile: ' + error.message);
+    }
+  };
+
   return (
     <div className="main-content">
       <h2>Configurazione Sistema</h2>
@@ -106,6 +143,84 @@ const ConfigView = ({ menu, lines, orders }) => {
         <div className="stat-card">
           <h4>Ordini Oggi</h4>
           <p>{orders.length} ordini totali</p>
+        </div>
+        <div className="stat-card">
+          <h4>Print Server</h4>
+          <p>{printServerConfig.enabled ? '🟢 Abilitato' : '🔴 Disabilitato'}</p>
+        </div>
+      </div>
+
+      {/* Print Server Configuration */}
+      <div className="config-section">
+        <div className="section-header">
+          <h3>🖨️ Configurazione Stampante</h3>
+        </div>
+        
+        <div className="print-server-config">
+          <div className="config-row">
+            <label>
+              <input
+                type="checkbox"
+                checked={printServerConfig.enabled}
+                onChange={(e) => setPrintServerConfig({
+                  ...printServerConfig,
+                  enabled: e.target.checked
+                })}
+              />
+              Usa Print Server USB
+            </label>
+          </div>
+          
+          {printServerConfig.enabled && (
+            <>
+              <div className="config-row">
+                <label>Host:</label>
+                <input
+                  type="text"
+                  value={printServerConfig.host}
+                  onChange={(e) => setPrintServerConfig({
+                    ...printServerConfig,
+                    host: e.target.value
+                  })}
+                  placeholder="localhost"
+                />
+              </div>
+              
+              <div className="config-row">
+                <label>Porta:</label>
+                <input
+                  type="text"
+                  value={printServerConfig.port}
+                  onChange={(e) => setPrintServerConfig({
+                    ...printServerConfig,
+                    port: e.target.value
+                  })}
+                  placeholder="3001"
+                />
+              </div>
+              
+              <div className="config-row">
+                <button onClick={checkPrintServerStatus} className="test-button">
+                  Verifica Connessione
+                </button>
+                <button 
+                  onClick={testPrintServer} 
+                  disabled={testingPrintServer}
+                  className="test-button"
+                >
+                  {testingPrintServer ? 'Stampa in corso...' : 'Test Stampa'}
+                </button>
+              </div>
+              
+              <div className="config-info">
+                <p><strong>URL Print Server:</strong> http://{printServerConfig.host}:{printServerConfig.port}</p>
+                <p><small>Assicurati che il print server sia avviato su ogni PC cassa</small></p>
+              </div>
+              
+              {/* Componente test avanzati */}
+              <PrintTestComponent />
+            </>
+          )}
         </div>
       </div>
 
