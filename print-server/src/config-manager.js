@@ -3,8 +3,13 @@
  * Gestisce caricamento e validazione della configurazione
  */
 
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// ES modules compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class ConfigManager {
     constructor(configPath = './config/config.json') {
@@ -205,4 +210,4 @@ class ConfigManager {
     }
 }
 
-module.exports = ConfigManager;
+export default ConfigManager;

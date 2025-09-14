@@ -16,6 +16,7 @@ const PrintTestComponent = () => {
       await testFn();
       setStatus(`✅ Test "${testName}" completato con successo`);
     } catch (error) {
+      console.error(`Errore test ${testName}:`, error);
       setStatus(`❌ Test "${testName}" fallito: ${error.message}`);
     } finally {
       setLoading(false);

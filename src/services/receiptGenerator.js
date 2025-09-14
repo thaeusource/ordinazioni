@@ -3,26 +3,24 @@
  * Genera comandi ESC/POS per ricevute della sagra
  */
 
-// Comandi ESC/POS base
-const ESC_POS = {
-  INIT: [0x1B, 0x40],
-  ALIGN_CENTER: [0x1B, 0x61, 0x01],
-  ALIGN_LEFT: [0x1B, 0x61, 0x00],
-  ALIGN_RIGHT: [0x1B, 0x61, 0x02],
-  BOLD_ON: [0x1B, 0x45, 0x01],
-  BOLD_OFF: [0x1B, 0x45, 0x00],
-  DOUBLE_SIZE: [0x1B, 0x21, 0x30],
-  NORMAL_SIZE: [0x1B, 0x21, 0x00],
-  LINE_FEED: [0x0A],
-  CUT_PAPER: [0x1D, 0x56, 0x00]
-};
+// Import dei comandi ESC/POS dal print-server (fonte unica)
+import { 
+  CONTROL, 
+  CUT, 
+  ALIGN, 
+  TEXT_STYLE, 
+  FONT, 
+  FEED, 
+  CHARS, 
+  HELPERS 
+} from '../../print-server/src/escpos-commands.js';
 
 class ReceiptGenerator {
   constructor(config = {}) {
     this.config = {
       title: config.title || 'SAGRA PARROCCHIA',
       footer: config.footer || 'Ritira alle cucine indicate',
-      width: config.width || 32,
+      width: config.width || 48,  // 80mm = ~48 caratteri
       currency: config.currency || 'EUR',
       separator: config.separator || '=',
       itemSeparator: config.itemSeparator || '-',
@@ -37,7 +35,7 @@ class ReceiptGenerator {
     const commands = [];
     
     // Inizializza
-    commands.push(...ESC_POS.INIT);
+    commands.push(...CONTROL.INIT);
     
     // Header
     commands.push(...this.createHeader());
@@ -64,14 +62,14 @@ class ReceiptGenerator {
     const commands = [];
     
     // Titolo centrato in grassetto
-    commands.push(...ESC_POS.ALIGN_CENTER);
-    commands.push(...ESC_POS.BOLD_ON);
-    commands.push(...ESC_POS.DOUBLE_SIZE);
+    commands.push(...ALIGN.CENTER);
+    commands.push(...TEXT_STYLE.BOLD_ON);
+    commands.push(...TEXT_STYLE.DOUBLE_SIZE);
     commands.push(...this.textToBytes(this.config.title));
-    commands.push(...ESC_POS.LINE_FEED);
-    commands.push(...ESC_POS.NORMAL_SIZE);
-    commands.push(...ESC_POS.BOLD_OFF);
-    commands.push(...ESC_POS.ALIGN_LEFT);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...TEXT_STYLE.NORMAL);
+    commands.push(...TEXT_STYLE.BOLD_OFF);
+    commands.push(...ALIGN.LEFT);
     
     // Linea separatrice
     commands.push(...this.createSeparator());
@@ -94,7 +92,7 @@ class ReceiptGenerator {
     
     info.forEach(line => {
       commands.push(...this.textToBytes(line));
-      commands.push(...ESC_POS.LINE_FEED);
+      commands.push(...FEED.ONE_LINE);
     });
     
     // Separatore items
@@ -113,13 +111,13 @@ class ReceiptGenerator {
       // Riga item con quantità e nome
       const itemLine = `${item.quantity || item.qty}x ${item.name}`;
       commands.push(...this.textToBytes(itemLine));
-      commands.push(...ESC_POS.LINE_FEED);
+      commands.push(...FEED.ONE_LINE);
       
       // Riga prezzo allineata a destra
       const price = this.formatPrice(item.price * (item.quantity || item.qty));
       const priceLine = this.createPriceLine('', price);
       commands.push(...this.textToBytes(priceLine));
-      commands.push(...ESC_POS.LINE_FEED);
+      commands.push(...FEED.ONE_LINE);
     });
     
     return commands;
@@ -135,11 +133,11 @@ class ReceiptGenerator {
     commands.push(...this.createSeparator(this.config.itemSeparator));
     
     // Totale in grassetto
-    commands.push(...ESC_POS.BOLD_ON);
+    commands.push(...TEXT_STYLE.BOLD_ON);
     const totalLine = this.createPriceLine('TOTALE:', this.formatPrice(total));
     commands.push(...this.textToBytes(totalLine));
-    commands.push(...ESC_POS.LINE_FEED);
-    commands.push(...ESC_POS.BOLD_OFF);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...TEXT_STYLE.BOLD_OFF);
     
     // Separatore finale
     commands.push(...this.createSeparator());
@@ -154,17 +152,15 @@ class ReceiptGenerator {
     const commands = [];
     
     if (this.config.footer) {
-      commands.push(...ESC_POS.ALIGN_CENTER);
+      commands.push(...ALIGN.CENTER);
       commands.push(...this.textToBytes(this.config.footer));
-      commands.push(...ESC_POS.LINE_FEED);
-      commands.push(...ESC_POS.ALIGN_LEFT);
+      commands.push(...FEED.ONE_LINE);
+      commands.push(...ALIGN.LEFT);
     }
     
     // Avanzamento carta e taglio
-    commands.push(...ESC_POS.LINE_FEED);
-    commands.push(...ESC_POS.LINE_FEED);
-    commands.push(...ESC_POS.LINE_FEED);
-    commands.push(...ESC_POS.CUT_PAPER);
+    commands.push(...FEED.THREE_LINES);
+    commands.push(...CUT.FULL);
     
     return commands;
   }
@@ -177,7 +173,7 @@ class ReceiptGenerator {
     const line = separatorChar.repeat(this.config.width);
     return [
       ...this.textToBytes(line),
-      ...ESC_POS.LINE_FEED
+      ...FEED.ONE_LINE
     ];
   }
 
@@ -211,10 +207,37 @@ class ReceiptGenerator {
   }
 
   /**
-   * Converte testo in array di byte
+   * Converte testo in array di byte (compatibile browser)
    */
   textToBytes(text) {
-    return Array.from(Buffer.from(text, 'utf8'));
+    // Verifica se siamo in ambiente Node.js o browser
+    if (typeof Buffer !== 'undefined') {
+      // Node.js environment
+      return Array.from(Buffer.from(text, 'utf8'));
+    } else {
+      // Browser environment - usa TextEncoder
+      const encoder = new TextEncoder();
+      return Array.from(encoder.encode(text));
+    }
+  }
+
+  /**
+   * Utility per verificare l'ambiente di esecuzione
+   */
+  isNodeEnvironment() {
+    return typeof Buffer !== 'undefined' && typeof process !== 'undefined';
+  }
+
+  /**
+   * Converte array di byte in stringa (per debug)
+   */
+  bytesToString(bytes) {
+    if (this.isNodeEnvironment()) {
+      return Buffer.from(bytes).toString('utf8');
+    } else {
+      const decoder = new TextDecoder();
+      return decoder.decode(new Uint8Array(bytes));
+    }
   }
 
   /**
@@ -240,35 +263,34 @@ class ReceiptGenerator {
   generateSimpleText(text, options = {}) {
     const commands = [];
     
-    commands.push(...ESC_POS.INIT);
+    commands.push(...CONTROL.INIT);
     
     if (options.center) {
-      commands.push(...ESC_POS.ALIGN_CENTER);
+      commands.push(...ALIGN.CENTER);
     }
     
     if (options.bold) {
-      commands.push(...ESC_POS.BOLD_ON);
+      commands.push(...TEXT_STYLE.BOLD_ON);
     }
     
     if (options.large) {
-      commands.push(...ESC_POS.DOUBLE_SIZE);
+      commands.push(...TEXT_STYLE.DOUBLE_SIZE);
     }
     
     commands.push(...this.textToBytes(text));
     
     if (!text.endsWith('\n')) {
-      commands.push(...ESC_POS.LINE_FEED);
+      commands.push(...FEED.ONE_LINE);
     }
     
     // Reset
-    commands.push(...ESC_POS.NORMAL_SIZE);
-    commands.push(...ESC_POS.BOLD_OFF);
-    commands.push(...ESC_POS.ALIGN_LEFT);
+    commands.push(...TEXT_STYLE.NORMAL);
+    commands.push(...TEXT_STYLE.BOLD_OFF);
+    commands.push(...ALIGN.LEFT);
     
     if (options.cut !== false) {
-      commands.push(...ESC_POS.LINE_FEED);
-      commands.push(...ESC_POS.LINE_FEED);
-      commands.push(...ESC_POS.CUT_PAPER);
+      commands.push(...FEED.TWO_LINES);
+      commands.push(...CUT.FULL);
     }
     
     return commands;

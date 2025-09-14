@@ -3,11 +3,18 @@
   "version": "1.0.0",
   "description": "Print server per stampante termica Qian QOP-T80UL-RI-02",
   "main": "src/print-server.js",
+  "type": "module",
   "scripts": {
     "start": "node src/print-server.js",
     "test": "curl -X POST http://localhost:3001/test",
     "install-deps": "node scripts/install.sh",
-    "quick-start": "node scripts/start.sh"
+    "quick-start": "node scripts/start.sh",
+    "build": "npm run clean && npm run package",
+    "clean": "rm -rf dist/ *.tar.gz *.zip",
+    "package": "npm run package:tar && npm run package:zip",
+    "package:tar": "tar --exclude='node_modules' --exclude='dist' --exclude='temp' --exclude='.git' --exclude='*.tar.gz' --exclude='*.zip' -czf sagra-print-server-v$(node -p \"require('./package.json').version\").tar.gz -C .. print-server",
+    "package:zip": "zip -r sagra-print-server-v$(node -p \"require('./package.json').version\").zip . -x 'node_modules/*' 'dist/*' 'temp/*' '.git/*' '*.tar.gz' '*.zip'",
+    "publish": "npm run build && echo 'Pacchetti creati:' && ls -la *.tar.gz *.zip"
   },
   "dependencies": {
     "express": "^4.18.2"

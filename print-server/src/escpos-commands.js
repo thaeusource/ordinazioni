@@ -1,10 +1,11 @@
 /**
  * ESC/POS Commands per stampante termica Qian QOP-T80UL-RI-02
  * Comandi standardizzati per il controllo della stampante
+ * Versione ES modules per React App
  */
 
 // Comandi di inizializzazione e controllo
-const CONTROL = {
+export const CONTROL = {
     INIT: [0x1B, 0x40],                    // ESC @ - Inizializza stampante
     RESET: [0x1B, 0x40],                   // ESC @ - Reset
     LINE_FEED: [0x0A],                     // LF - Nuova linea
@@ -15,7 +16,7 @@ const CONTROL = {
 };
 
 // Comandi per il taglio della carta
-const CUT = {
+export const CUT = {
     FULL: [0x1D, 0x56, 0x00],             // GS V 0 - Taglio completo
     PARTIAL: [0x1D, 0x56, 0x01],          // GS V 1 - Taglio parziale
     FULL_WITH_FEED: [0x1D, 0x56, 0x41, 0x03], // GS V A 3 - Taglio con feed
@@ -23,14 +24,14 @@ const CUT = {
 };
 
 // Comandi per l'allineamento del testo
-const ALIGN = {
+export const ALIGN = {
     LEFT: [0x1B, 0x61, 0x00],             // ESC a 0 - Allineamento a sinistra
     CENTER: [0x1B, 0x61, 0x01],           // ESC a 1 - Allineamento al centro
     RIGHT: [0x1B, 0x61, 0x02],            // ESC a 2 - Allineamento a destra
 };
 
 // Comandi per lo stile del testo
-const TEXT_STYLE = {
+export const TEXT_STYLE = {
     NORMAL: [0x1B, 0x21, 0x00],           // ESC ! 0 - Testo normale
     BOLD_ON: [0x1B, 0x45, 0x01],          // ESC E 1 - Grassetto ON
     BOLD_OFF: [0x1B, 0x45, 0x00],         // ESC E 0 - Grassetto OFF
@@ -44,14 +45,14 @@ const TEXT_STYLE = {
 };
 
 // Comandi per il carattere
-const FONT = {
+export const FONT = {
     FONT_A: [0x1B, 0x4D, 0x00],           // ESC M 0 - Font A (12x24)
     FONT_B: [0x1B, 0x4D, 0x01],           // ESC M 1 - Font B (9x17)
     FONT_C: [0x1B, 0x4D, 0x02],           // ESC M 2 - Font C (se supportato)
 };
 
 // Comandi per l'avanzamento carta
-const FEED = {
+export const FEED = {
     ONE_LINE: [0x0A],                      // LF - Una linea
     TWO_LINES: [0x0A, 0x0A],              // LF LF - Due linee
     THREE_LINES: [0x0A, 0x0A, 0x0A],      // LF LF LF - Tre linee
@@ -60,13 +61,13 @@ const FEED = {
 };
 
 // Comandi per il cassetto
-const DRAWER = {
+export const DRAWER = {
     OPEN_PIN_2: [0x1B, 0x70, 0x00, 0x19, 0xFA], // ESC p 0 - Apri cassetto pin 2
     OPEN_PIN_5: [0x1B, 0x70, 0x01, 0x19, 0xFA], // ESC p 1 - Apri cassetto pin 5
 };
 
 // Comandi per codici a barre (se supportati)
-const BARCODE = {
+export const BARCODE = {
     HEIGHT: [0x1D, 0x68],                  // GS h - Altezza codice a barre
     WIDTH: [0x1D, 0x77],                   // GS w - Larghezza codice a barre
     POSITION: [0x1D, 0x48],                // GS H - Posizione testo
@@ -75,7 +76,7 @@ const BARCODE = {
 };
 
 // Comandi per QR Code (se supportati)
-const QR = {
+export const QR = {
     MODEL: [0x1D, 0x28, 0x6B, 0x04, 0x00, 0x31, 0x41], // Modello QR
     SIZE: [0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x43],  // Dimensione
     ERROR_CORRECTION: [0x1D, 0x28, 0x6B, 0x03, 0x00, 0x31, 0x45], // Correzione errori
@@ -84,21 +85,21 @@ const QR = {
 };
 
 // Comandi per tabelle e colonne
-const TABLE = {
+export const TABLE = {
     SET_TAB: [0x1B, 0x44],                 // ESC D - Imposta tab
     CLEAR_TAB: [0x1B, 0x44, 0x00],         // ESC D 0 - Cancella tab
     TAB: [0x09],                           // HT - Vai a tab
 };
 
 // Comandi per immagini (se supportati)
-const IMAGE = {
+export const IMAGE = {
     SELECT_BIT_IMAGE: [0x1B, 0x2A],        // ESC * - Seleziona modalità immagine
     DEFINE_NV_BIT_IMAGE: [0x1C, 0x71],     // FS q - Definisci immagine NV
     PRINT_NV_BIT_IMAGE: [0x1C, 0x70],      // FS p - Stampa immagine NV
 };
 
 // Caratteri speciali per layout
-const CHARS = {
+export const CHARS = {
     HORIZONTAL_LINE: '━',
     LIGHT_HORIZONTAL: '─',
     DOUBLE_LINE: '═',
@@ -114,8 +115,23 @@ const CHARS = {
     DEGREE: '°',
 };
 
-// Funzioni helper per creare comandi complessi
-const HELPERS = {
+// Funzioni helper per creare comandi complessi (browser-compatible)
+export const HELPERS = {
+    /**
+     * Converte testo in array di byte (compatibile browser)
+     */
+    textToBytes: (text) => {
+        // Verifica se siamo in ambiente Node.js o browser
+        if (typeof Buffer !== 'undefined') {
+            // Node.js environment
+            return Array.from(Buffer.from(text, 'utf8'));
+        } else {
+            // Browser environment - usa TextEncoder
+            const encoder = new TextEncoder();
+            return Array.from(encoder.encode(text));
+        }
+    },
+
     /**
      * Crea comando per testo con stile specifico
      */
@@ -124,7 +140,7 @@ const HELPERS = {
         if (TEXT_STYLE[style]) {
             commands.push(...TEXT_STYLE[style]);
         }
-        commands.push(...Buffer.from(text));
+        commands.push(...HELPERS.textToBytes(text));
         commands.push(...TEXT_STYLE.NORMAL); // Reset allo stile normale
         return commands;
     },
@@ -137,7 +153,7 @@ const HELPERS = {
         if (ALIGN[alignment]) {
             commands.push(...ALIGN[alignment]);
         }
-        commands.push(...Buffer.from(text));
+        commands.push(...HELPERS.textToBytes(text));
         commands.push(...ALIGN.LEFT); // Reset all'allineamento a sinistra
         return commands;
     },
@@ -145,29 +161,31 @@ const HELPERS = {
     /**
      * Crea una linea di separazione
      */
-    separator: (char = '=', length = 32) => {
-        return Buffer.from(char.repeat(length) + '\n');
+    separator: (char = '=', length = 48) => {
+        return [
+            ...HELPERS.textToBytes(char.repeat(length) + '\n')
+        ];
     },
 
     /**
      * Formatta una linea con prezzo allineato a destra
      */
-    priceeLine: (description, price, lineWidth = 32) => {
+    priceLine: (description, price, lineWidth = 48) => {
         const priceStr = price.toString();
         const maxDescLength = lineWidth - priceStr.length - 1;
-        const desc = description.length > maxDescLength ? 
-                    description.substring(0, maxDescLength - 3) + '...' : 
-                    description;
+        const desc = description.length > maxDescLength ?
+            description.substring(0, maxDescLength - 3) + '...' :
+            description;
         const spaces = ' '.repeat(lineWidth - desc.length - priceStr.length);
-        return Buffer.from(desc + spaces + priceStr + '\n');
+        return HELPERS.textToBytes(desc + spaces + priceStr + '\n');
     },
 
     /**
      * Centra il testo in una linea di larghezza specifica
      */
-    centerText: (text, lineWidth = 32) => {
+    centerText: (text, lineWidth = 48) => {
         const padding = Math.max(0, Math.floor((lineWidth - text.length) / 2));
-        return Buffer.from(' '.repeat(padding) + text + '\n');
+        return HELPERS.textToBytes(' '.repeat(padding) + text + '\n');
     },
 
     /**
@@ -177,10 +195,10 @@ const HELPERS = {
         const commands = [];
         commands.push(...ALIGN.CENTER);
         commands.push(...TEXT_STYLE.DOUBLE_SIZE);
-        commands.push(...Buffer.from(title + '\n'));
+        commands.push(...HELPERS.textToBytes(title + '\n'));
         commands.push(...TEXT_STYLE.NORMAL);
         if (subtitle) {
-            commands.push(...Buffer.from(subtitle + '\n'));
+            commands.push(...HELPERS.textToBytes(subtitle + '\n'));
         }
         commands.push(...ALIGN.LEFT);
         return commands;
@@ -193,27 +211,12 @@ const HELPERS = {
         const commands = [];
         if (message) {
             commands.push(...ALIGN.CENTER);
-            commands.push(...Buffer.from(message + '\n'));
+            commands.push(...HELPERS.textToBytes(message + '\n'));
             commands.push(...ALIGN.LEFT);
         }
         commands.push(...FEED.CUSTOM(feedLines));
+        commands.push(...FEED.THREE_LINES);
         commands.push(...CUT.FULL);
         return commands;
     }
-};
-
-module.exports = {
-    CONTROL,
-    CUT,
-    ALIGN,
-    TEXT_STYLE,
-    FONT,
-    FEED,
-    DRAWER,
-    BARCODE,
-    QR,
-    TABLE,
-    IMAGE,
-    CHARS,
-    HELPERS
 };

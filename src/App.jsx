@@ -31,7 +31,7 @@ const App = () => {
       receiptConfig: {
         title: 'FESTA DELLA PARROCCHIA',
         footer: 'Ritira alle cucine indicate',
-        width: 32,
+        width: 48,  // 80mm = ~48 caratteri
         currency: 'EUR'
       }
     };
@@ -171,7 +171,7 @@ const App = () => {
       try {
         const printService = getPrintService();
         
-        // Prepara dati ordine per il nuovo formato
+        // Prepara dati ordine per il receiptGenerator
         const orderData = {
           customerNumber: order.customerNumber.toString(),
           station: `Stazione ${order.station}`,
@@ -183,8 +183,11 @@ const App = () => {
           total: order.total
         };
         
-        // Usa il nuovo metodo del servizio di stampa
-        await printService.printOrderReceipt(orderData);
+        // Genera comandi ESC/POS usando receiptGenerator
+        const printCommands = printService.receiptGenerator.generateOrderReceipt(orderData);
+        
+        // Stampa usando il metodo print() aggiornato
+        await printService.print(printCommands);
         console.log('✅ Scontrino stampato tramite nuovo print service');
         return; // Stampa riuscita, esci
         
@@ -193,20 +196,27 @@ const App = () => {
       }
     }
     
-    // Fallback: browser print (invariato)
+    /*
+    // Fallback: browser print (aggiornato per 80mm)
     const receiptContent = `
-=== SAGRA PARROCCHIA ===
+${'='.repeat(48)}
+          SAGRA PARROCCHIA - SCONTRINO
+${'='.repeat(48)}
 Numero: ${order.customerNumber}
 Stazione: ${order.station}
 Ora: ${new Date().toLocaleTimeString('it-IT')}
-${'='.repeat(25)}
-${order.items.map(item => 
-  `${item.name}\n${item.quantity}x €${item.price.toFixed(2)} = €${(item.quantity * item.price).toFixed(2)}`
-).join('\n')}
-${'='.repeat(25)}
-TOTALE: €${order.total.toFixed(2)}
-${'='.repeat(25)}
-Ritira alle cucine indicate
+${'-'.repeat(48)}
+${order.items.map(item => {
+  const itemLine = `${item.quantity}x ${item.name}`;
+  const price = `EUR ${item.price.toFixed(2)}`;
+  const total = `EUR ${(item.quantity * item.price).toFixed(2)}`;
+  const spacing = 48 - itemLine.length - total.length;
+  return itemLine + ' '.repeat(Math.max(1, spacing)) + total;
+}).join('\n')}
+${'-'.repeat(48)}
+${'TOTALE:'.padEnd(48 - `EUR ${order.total.toFixed(2)}`.length)}EUR ${order.total.toFixed(2)}
+${'='.repeat(48)}
+      Ritira alle cucine indicate
     `.trim();
     
     const printWindow = window.open('', '_blank');
@@ -215,7 +225,7 @@ Ritira alle cucine indicate
         <head>
           <title>Scontrino #${order.customerNumber}</title>
           <style>
-            body { font-family: 'Courier New', monospace; font-size: 12px; width: 58mm; margin: 0; }
+            body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0; }
             .center { text-align: center; }
             .line { border-top: 1px solid #000; margin: 5px 0; }
           </style>
@@ -228,6 +238,7 @@ Ritira alle cucine indicate
     printWindow.document.close();
     printWindow.print();
     printWindow.close();
+    */
   };
 
   const completeOrder = async (orderId) => {

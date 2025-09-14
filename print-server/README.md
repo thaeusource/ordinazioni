@@ -1,96 +1,124 @@
-# Print Server per Sagra - Documentazione# 🖨️ Sagra Print Server
+# 🖨️ Sagra Print Server v1.0
 
+Server di stampa termico per ricevute della sagra con supporto cross-platform per stampanti ESC/POS.  
+**Testato con: Qian QOP-T80UL-RI-02**
 
+## 📋 Contenuto Pacchetto
 
-Server di stampa termico cross-platform per ricevute della sagra con stampante Qian QOP-T80UL-RI-02.Server standalone per stampanti termiche USB compatibile con Qian QOP-T80UL-RI-02 e altri modelli ESC/POS.
-
-
-
-## 🎯 Caratteristiche## 📋 Requisiti
-
-
-
-- ✅ **Cross-platform**: Windows, macOS, Linux- **Node.js** 16+ installato sul PC
-
-- ✅ **Configurazione esterna**: File config.json- **Stampante USB** Qian QOP-T80UL-RI-02 collegata e accesa
-
-- ✅ **Comandi ESC/POS**: Supporto completo per stampanti termiche- **Driver stampante** installati (solitamente automatici)
-
-- ✅ **API REST**: Integrazione semplice con app web
-
-- ✅ **Auto-installer**: Script di installazione automatica## 🚀 Installazione Rapida
-
-- ✅ **Gestione errori**: Fallback e diagnostica
-
-- ✅ **Servizio Windows**: Installazione come servizio### 1. Preparazione PC Cassa
-
-
-
-## 📦 Installazione```bash
-
-# Copia questa cartella sul PC della cassa
-
-### Installazione Automatica# Esempio: C:\sagra-print-server\
-
-
-
-#### macOS/Linux# Apri terminale/prompt nella cartella
-
-```bashcd C:\sagra-print-server
-
-chmod +x install.sh
-
-./install.sh# Installa dipendenze (solo la prima volta)
-
-```npm install
+Questo pacchetto contiene tutto il necessario per installare e utilizzare il print server:
 
 ```
+sagra-print-server/
+├── 🚀 run.sh / run.bat     # AVVIO RAPIDO
+├── 📦 package.json         # Configurazione Node.js
+├── 📚 README.md           # Questa guida
+├── src/                   # Codice sorgente
+│   ├── print-server.js    # Server principale
+│   ├── config-manager.js  # Gestione configurazione
+│   ├── print-manager.js   # Gestione stampa cross-platform
+│   └── escpos-commands.js # Comandi ESC/POS
+├── scripts/               # Script di installazione
+│   ├── install.sh         # Installer Unix (macOS/Linux)
+│   ├── install.bat        # Installer Windows
+│   ├── start.sh           # Avvio Unix
+│   └── start.bat          # Avvio Windows
+└── config/                # Configurazione
+    ├── config.json        # Config principale (auto-generato)
+    └── config.template.json # Template di configurazione
+```
+
+## � AVVIO RAPIDO (Raccomandato)
+
+### 1. Copia il Pacchetto
+Copia questa cartella completa sul PC della cassa:
+- **Windows**: `C:\sagra-print-server\`
+- **macOS/Linux**: `~/sagra-print-server/`
+
+### 2. Avvio Automatico
 
 #### Windows
+```cmd
+# Doppio click su: run.bat
+# OPPURE da prompt comandi:
+run.bat
+```
 
-```cmd### 2. Avvio Server
-
-install.bat
-
-``````bash
-
-# Avvia il server di stampa
-
-### Installazione Manualenpm start
-
-
-
-1. **Installa Node.js** (versione 16.0.0+)# Il server sarà disponibile su http://localhost:3001
-
-   - macOS: `brew install node````
-
-   - Windows: Download da [nodejs.org](https://nodejs.org)
-
-   - Linux: `sudo apt install nodejs npm`### 3. Test Funzionamento
-
-
-
-2. **Installa dipendenze**Visita http://localhost:3001/health nel browser per verificare che tutto funzioni.
-
-   ```bash
-
-   npm installPer stampare un test: http://localhost:3001/test
-
-   ```
-
-## 🔧 Configurazione
-
-3. **Configura stampante**
-
-   ```bash### Variabili Ambiente (opzionali)
-
-   cp config.template.json config.json
-
-   # Modifica config.json con il nome della tua stampanteCrea un file `.env` per personalizzare:
-
-   ```
-
+#### macOS/Linux
 ```bash
+# Da terminale:
+chmod +x run.sh
+./run.sh
+```
+
+**Il sistema farà tutto automaticamente:**
+- ✅ Installa dipendenze Node.js se necessario
+- ✅ Configura il print server
+- ✅ Avvia il servizio sulla porta 3001
+
+## 📦 Requisiticmd### 2. Avvio Server
+
+- **Sistema Operativo**: Windows 10+, macOS 10.14+, Ubuntu 18.04+
+- **Stampante**: Qian QOP-T80UL-RI-02 collegata via USB
+- **Node.js**: v16.0.0+ (installato automaticamente dagli script)
+
+## 🔧 Configurazione Avanzata
+
+### Configurazione Stampante
+
+Il file `config/config.json` viene creato automaticamente al primo avvio:
+
+```json
+{
+  "printer": {
+    "name": "POS80_RAW",
+    "encoding": "utf8"
+  },
+  "server": {
+    "port": 3001,
+    "host": "0.0.0.0"
+  }
+}
+```
+
+### Trovare il Nome della Stampante
+
+#### Windows
+```cmd
+# Pannello di Controllo > Stampanti
+# OPPURE da terminale:
+wmic printer list brief
+```
+
+#### macOS
+```bash
+lpstat -p
+```
+
+#### Linux
+```bash
+lpstat -p
+```
+
+### Modifica Configurazione
+
+Modifica `config/config.json` e imposta il nome corretto della stampante:
+```json
+{
+  "printer": {
+    "name": "IL_TUO_NOME_STAMPANTE_QUI"
+  }
+}
+```
+
+## 🧪 Test del Sistema
+
+### Test di Base
+1. Avvia il server con `./run.sh` (Unix) o `run.bat` (Windows)
+2. Apri browser: `http://localhost:3001/health`
+3. Testa stampa: `http://localhost:3001/test`
+
+### Test da App React
+L'app della sagra si collegherà automaticamente al print server su `http://localhost:3001`
 
 ## ⚙️ ConfigurazionePORT=3001              # Porta del server
 

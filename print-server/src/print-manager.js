@@ -3,10 +3,15 @@
  * Gestisce i comandi di stampa su Windows, macOS e Linux
  */
 
-const { exec } = require('child_process');
-const fs = require('fs');
-const path = require('path');
-const os = require('os');
+import { exec } from 'child_process';
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+import { fileURLToPath } from 'url';
+
+// ES modules compatibility
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 class PrintManager {
     constructor(config) {
@@ -264,4 +269,4 @@ la stampante funziona correttamente!
     }
 }
 
-module.exports = PrintManager;
+export default PrintManager;

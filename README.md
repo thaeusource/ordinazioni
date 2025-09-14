@@ -177,14 +177,14 @@ Il sistema di stampa è ora completamente modulare e separato in:
 ### API Print Server
 
 #### Endpoint Generici
-- `POST /print-raw` - Stampa comandi ESC/POS grezzi
+- `POST /print` - Stampa comandi ESC/POS grezzi
 - `POST /print-text` - Stampa testo semplice con opzioni
 - `GET /ping` - Verifica connessione
 - `GET /status` - Stato stampante
 - `GET /config` - Configurazione server
 
 #### Endpoint Compatibilità (deprecati)
-- `POST /print-receipt` - Stampa ricevuta (usa internamente /print-raw)
+- `POST /print-receipt` - Stampa ricevuta (usa internamente /print)
 
 ### Utilizzo nel Codice React
 
