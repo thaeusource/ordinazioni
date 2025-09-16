@@ -18,7 +18,7 @@ import {
 class ReceiptGenerator {
   constructor(config = {}) {
     this.config = {
-      title: config.title || 'SAGRA PARROCCHIA',
+      title: config.title || 'FESTA DELLA PARROCCHIA',
       footer: config.footer || 'Ritira alle cucine indicate',
       width: config.width || 48,  // 80mm = ~48 caratteri
       currency: config.currency || 'EUR',
@@ -159,7 +159,11 @@ class ReceiptGenerator {
     }
     
     // Avanzamento carta e taglio
-    commands.push(...FEED.THREE_LINES);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
     commands.push(...CUT.FULL);
     
     return commands;
@@ -238,62 +242,6 @@ class ReceiptGenerator {
       const decoder = new TextDecoder();
       return decoder.decode(new Uint8Array(bytes));
     }
-  }
-
-  /**
-   * Genera ricevuta di test
-   */
-  generateTestReceipt() {
-    const testOrder = {
-      customerNumber: 'TEST-001',
-      station: 'Test Station',
-      items: [
-        { name: 'Pizza Margherita', quantity: 2, price: 8.00 },
-        { name: 'Coca Cola', quantity: 1, price: 2.50 }
-      ],
-      total: 18.50
-    };
-    
-    return this.generateOrderReceipt(testOrder);
-  }
-
-  /**
-   * Genera solo testo semplice
-   */
-  generateSimpleText(text, options = {}) {
-    const commands = [];
-    
-    commands.push(...CONTROL.INIT);
-    
-    if (options.center) {
-      commands.push(...ALIGN.CENTER);
-    }
-    
-    if (options.bold) {
-      commands.push(...TEXT_STYLE.BOLD_ON);
-    }
-    
-    if (options.large) {
-      commands.push(...TEXT_STYLE.DOUBLE_SIZE);
-    }
-    
-    commands.push(...this.textToBytes(text));
-    
-    if (!text.endsWith('\n')) {
-      commands.push(...FEED.ONE_LINE);
-    }
-    
-    // Reset
-    commands.push(...TEXT_STYLE.NORMAL);
-    commands.push(...TEXT_STYLE.BOLD_OFF);
-    commands.push(...ALIGN.LEFT);
-    
-    if (options.cut !== false) {
-      commands.push(...FEED.TWO_LINES);
-      commands.push(...CUT.FULL);
-    }
-    
-    return commands;
   }
 }
 
