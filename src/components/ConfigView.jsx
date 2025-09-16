@@ -3,14 +3,14 @@ import { Edit2, Trash2, Save, X, PlusCircle } from 'lucide-react';
 import { firebaseService } from '../services/firebaseService';
 import MenuItemForm from './MenuItemForm';
 import LineForm from './LineForm';
-import PrintTestComponent from './PrintTestComponent';
+import MonitoringView from './MonitoringView';
 
-const ConfigView = ({ menu, lines, orders, printServerConfig, setPrintServerConfig }) => {
+const ConfigView = ({ menu, lines, orders, allOrders, printStations, orderStats }) => {
   const [editingMenuItem, setEditingMenuItem] = useState(null);
   const [editingLine, setEditingLine] = useState(null);
   const [showAddMenuItem, setShowAddMenuItem] = useState(false);
   const [showAddLine, setShowAddLine] = useState(false);
-  const [testingPrintServer, setTestingPrintServer] = useState(false);
+  const [activeTab, setActiveTab] = useState('menu');
 
   // Menu Management Functions
   const handleSaveMenuItem = async (itemData) => {
@@ -91,66 +91,46 @@ const ConfigView = ({ menu, lines, orders, printServerConfig, setPrintServerConf
     }
   };
 
-  // Print Server Functions
-  const testPrintServer = async () => {
-    setTestingPrintServer(true);
-    try {
-      const url = `http://${printServerConfig.host}:${printServerConfig.port}/test`;
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        alert('✅ Test di stampa inviato! Controlla la stampante.');
-      } else {
-        alert('❌ Print server non risponde. Verifica che sia avviato.');
-      }
-    } catch (error) {
-      alert('❌ Errore connessione print server: ' + error.message);
-    } finally {
-      setTestingPrintServer(false);
-    }
-  };
-
-  const checkPrintServerStatus = async () => {
-    try {
-      const url = `http://${printServerConfig.host}:${printServerConfig.port}/health`;
-      const response = await fetch(url);
-      
-      if (response.ok) {
-        const data = await response.json();
-        alert(`✅ Print Server connesso!\nStato: ${data.status}\nStampante: ${data.printer}`);
-      } else {
-        alert('❌ Print server non risponde');
-      }
-    } catch (error) {
-      alert('❌ Print server non raggiungibile: ' + error.message);
-    }
-  };
-
   return (
     <div className="main-content">
       <h2>Configurazione Sistema</h2>
       
-      {/* Statistics */}
-      <div className="config-stats">
-        <div className="stat-card">
-          <h4>Menu Items</h4>
-          <p>{menu.length} piatti configurati</p>
-        </div>
-        <div className="stat-card">
-          <h4>Linee Produzione</h4>
-          <p>{lines.length} linee attive</p>
-        </div>
-        <div className="stat-card">
-          <h4>Ordini Oggi</h4>
-          <p>{orders.length} ordini totali</p>
-        </div>
-        <div className="stat-card">
-          <h4>Print Server</h4>
-          <p>{printServerConfig.enabled ? '🟢 Abilitato' : '🔴 Disabilitato'}</p>
-        </div>
+      {/* Tab Navigation */}
+      <div className="config-tabs">
+        <button 
+          onClick={() => setActiveTab('menu')}
+          className={`tab-button ${activeTab === 'menu' ? 'active' : ''}`}
+        >
+          📋 Menu & Linee
+        </button>
+        <button 
+          onClick={() => setActiveTab('monitor')}
+          className={`tab-button ${activeTab === 'monitor' ? 'active' : ''}`}
+        >
+          📊 Monitor Sistema
+        </button>
       </div>
 
-      {/* Menu Management */}
+      {/* Menu & Lines Tab */}
+      {activeTab === 'menu' && (
+        <>
+          {/* Statistics */}
+          <div className="config-stats">
+            <div className="stat-card">
+              <h4>Menu Items</h4>
+              <p>{menu.length} piatti configurati</p>
+            </div>
+            <div className="stat-card">
+              <h4>Linee Produzione</h4>
+              <p>{lines.length} linee attive</p>
+            </div>
+            <div className="stat-card">
+              <h4>Ordini Oggi</h4>
+              <p>{orders.length} ordini totali</p>
+            </div>
+          </div>
+
+          {/* Menu Management */}
       <div className="config-section">
         <div className="section-header">
           <h3>Gestione Menu</h3>
@@ -317,6 +297,17 @@ const ConfigView = ({ menu, lines, orders, printServerConfig, setPrintServerConf
           ))}
         </div>
       </div>
+        </>
+      )}
+
+      {/* Monitor Tab */}
+      {activeTab === 'monitor' && (
+        <MonitoringView 
+          allOrders={allOrders || []}
+          printStations={printStations || []}
+          orderStats={orderStats || { total: 0, printed: 0, pending: 0, failed: 0 }}
+        />
+      )}
     </div>
   );
 };

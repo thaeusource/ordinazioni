@@ -106,7 +106,18 @@ export class FirebaseService {
       const docRef = await addDoc(collection(db, COLLECTIONS.ORDERS), {
         ...orderData,
         createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp()
+        updatedAt: serverTimestamp(),
+        timestamp: serverTimestamp(), // Aggiungiamo anche timestamp per compatibilità
+        
+        // Stato stampa iniziale
+        printStatus: {
+          printed: false,
+          printedAt: null,
+          printedBy: null,
+          attempts: 0,
+          lastAttempt: null,
+          error: null
+        }
       });
 
       return docRef.id;
