@@ -1,6 +1,5 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getFirestore, connectFirestoreEmulator } from 'firebase/firestore';
-import { getDatabase, connectDatabaseEmulator } from 'firebase/database';
 import { getAuth, connectAuthEmulator } from 'firebase/auth';
 
 const firebaseConfig = {
@@ -9,27 +8,43 @@ const firebaseConfig = {
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
   messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+  // Rimuoviamo databaseURL visto che non usiamo Realtime Database
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase (prevent duplicate initialization)
+const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
 
-// Initialize services
-export const db = getFirestore(app);
-export const rtdb = getDatabase(app);
-export const auth = getAuth(app);
+// Initialize services (prevent duplicate initialization)
+let db, auth;
 
-// Connect to emulators in development
-if (import.meta.env.DEV) {
+try {
+  db = getFirestore(app);
+  auth = getAuth(app);
+} catch (error) {
+  console.warn('Firebase services already initialized:', error.message);
+}
+
+// Track if emulators are already connected
+let emulatorsConnected = false;
+
+// Connect to emulators in development (only once)
+if (import.meta.env.DEV && !emulatorsConnected && import.meta.env.VITE_USE_EMULATORS === 'true') {
   try {
-    connectFirestoreEmulator(db, 'localhost', 8080);
-    connectDatabaseEmulator(rtdb, 'localhost', 9000);
-    connectAuthEmulator(auth, 'http://localhost:9099');
+    if (db && !db._delegate._terminated) {
+      connectFirestoreEmulator(db, 'localhost', 8080);
+    }
+    if (auth) {
+      connectAuthEmulator(auth, 'http://localhost:9099');
+    }
+    emulatorsConnected = true;
+    console.log('Firebase emulators connected');
   } catch (error) {
-    console.log('Emulators already connected or not available');
+    console.log('Emulators already connected or not available:', error.message);
+    emulatorsConnected = true; // Mark as connected to prevent retry
   }
 }
+
+export { db, auth };
 
 export default app;

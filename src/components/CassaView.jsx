@@ -15,15 +15,15 @@ const CassaView = ({
   return (
     <div className="main-content">
       <div className="section-header">
-        <h2>Cassa {currentStation}</h2>
-        <select 
-          value={currentStation} 
-          onChange={(e) => setCurrentStation(parseInt(e.target.value))}
+        <h2>Cassa {currentStation.replace('cassa', '')}</h2>
+        <select
+          value={currentStation}
+          onChange={(e) => setCurrentStation(e.target.value)}
           className="station-select"
         >
-          <option value={1}>Cassa 1</option>
-          <option value={2}>Cassa 2</option>
-          <option value={3}>Cassa 3</option>
+          <option value="cassa1">Cassa 1</option>
+          <option value="cassa2">Cassa 2</option>
+          <option value="cassa3">Cassa 3</option>
         </select>
       </div>
 

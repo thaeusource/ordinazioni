@@ -1145,3 +1145,282 @@ main {
     display: none;
   }
 }
+
+/* Monitoring View Styles */
+.monitoring-view {
+  padding: 2rem;
+}
+
+.monitoring-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.monitoring-header h2 {
+  font-size: 2rem;
+  color: #1f2937;
+  margin: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 3rem;
+}
+
+.stat-card {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  transition: all 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.stat-card.success {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.stat-card.warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.stat-card.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.stat-card h3 {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #6b7280;
+  margin: 0 0 0.5rem 0;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stat-number {
+  font-size: 2.5rem;
+  font-weight: bold;
+  margin: 0;
+}
+
+.stat-card.success .stat-number {
+  color: #10b981;
+}
+
+.stat-card.warning .stat-number {
+  color: #f59e0b;
+}
+
+.stat-card.error .stat-number {
+  color: #ef4444;
+}
+
+.stat-card:not(.success):not(.warning):not(.error) .stat-number {
+  color: #3b82f6;
+}
+
+/* Print Stations */
+.print-stations {
+  margin-bottom: 3rem;
+}
+
+.print-stations h3 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.stations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.station-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  transition: all 0.2s;
+}
+
+.station-card.online {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.station-card.offline {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.station-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.station-header h4 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #1f2937;
+}
+
+.status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.status.online {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.status.offline {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.station-info p {
+  margin: 0.5rem 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.no-stations {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+/* Recent Orders */
+.recent-orders h3 {
+  font-size: 1.5rem;
+  color: #1f2937;
+  margin-bottom: 1rem;
+}
+
+.orders-list {
+  display: grid;
+  gap: 1rem;
+}
+
+.order-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+  transition: all 0.2s;
+}
+
+.order-card.printed {
+  border-color: #10b981;
+  background: #f0fdf4;
+}
+
+.order-card.pending {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+.order-card.error {
+  border-color: #ef4444;
+  background: #fef2f2;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.customer-number {
+  font-weight: bold;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+.timestamp {
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.print-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.print-status.printed {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.print-status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.print-status.error {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.order-details {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.order-details p {
+  margin: 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+.no-orders {
+  text-align: center;
+  padding: 2rem;
+  color: #6b7280;
+}
+
+@media (max-width: 768px) {
+  .monitoring-view {
+    padding: 1rem;
+  }
+  
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .stations-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .order-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  
+  .order-details {
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+}

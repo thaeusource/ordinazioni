@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings, RefreshCw } from 'lucide-react';
 import { firebaseService } from './services/firebaseService';
 import { createPrintService, getPrintService } from './services/printService';
+import { getFirestoreService } from './services/firestoreService';
 import CassaView from './components/CassaView.jsx';
 import KitchenView from './components/KitchenView';
 import ConfigView from './components/ConfigView';
@@ -9,13 +10,23 @@ import './App.css';
 
 const App = () => {
   const [currentView, setCurrentView] = useState('cassa');
-  const [currentStation, setCurrentStation] = useState(1);
+  const [currentStation, setCurrentStation] = useState('cassa1');
   const [cart, setCart] = useState([]);
   const [orders, setOrders] = useState([]);
   const [menu, setMenu] = useState([]);
   const [lines, setLines] = useState([]);
   const [loading, setLoading] = useState(true);
   const [customerNumber, setCustomerNumber] = useState(1);
+  
+  // Stati Firestore per monitoraggio stampa
+  const [allOrders, setAllOrders] = useState([]);
+  const [printStations, setPrintStations] = useState([]);
+  const [orderStats, setOrderStats] = useState({
+    total: 0,
+    printed: 0,
+    pending: 0,
+    failed: 0
+  });
   
   // Configurazione Print Server
   const [printServerConfig, setPrintServerConfig] = useState({
@@ -68,11 +79,42 @@ const App = () => {
           setLines(linesData);
         });
 
+        // Monitoraggio Firestore per stampa
+        const firestoreService = getFirestoreService();
+        
+        // Monitora tutti gli ordini per statistiche
+        const unsubscribeAllOrders = firestoreService.monitorOrders({}, (ordersData) => {
+          setAllOrders(ordersData);
+          
+          // Calcola statistiche
+          const stats = ordersData.reduce((acc, order) => {
+            acc.total++;
+            if (order.printStatus?.printed) {
+              acc.printed++;
+            } else if (order.printStatus?.error) {
+              acc.failed++;
+            } else {
+              acc.pending++;
+            }
+            return acc;
+          }, { total: 0, printed: 0, pending: 0, failed: 0 });
+          
+          setOrderStats(stats);
+        });
+        
+        // Monitora stazioni di stampa
+        const unsubscribePrintStations = firestoreService.monitorPrintStations((stationsData) => {
+          setPrintStations(stationsData);
+        });
+
         // Cleanup subscriptions on unmount
         return () => {
           unsubscribeOrders();
           unsubscribeMenu();
           unsubscribeLines();
+          unsubscribeAllOrders();
+          unsubscribePrintStations();
+          firestoreService.unsubscribeAll();
         };
         
       } catch (error) {
@@ -154,91 +196,14 @@ const App = () => {
         setCart([]);
         setCustomerNumber(customerNumber + 1);
         
-        // Print receipt
-        printReceipt({ ...orderData, id: orderId });
+        /*****************************************
+         * Warning! The receipt will be printed automatically via Firestore trigger! There is not a direct call!
+         * *****************************************/
       }
     } catch (error) {
       console.error('Error processing order:', error);
       alert('Errore nel processare l\'ordine. Riprova.');
     }
-  };
-
-  const printReceipt = async (order) => {
-    console.log('STAMPA SCONTRINO - Cliente #' + order.customerNumber);
-    
-    // Se print server è abilitato, prova a usare il nuovo servizio
-    if (printServerConfig.enabled) {
-      try {
-        const printService = getPrintService();
-        
-        // Prepara dati ordine per il receiptGenerator
-        const orderData = {
-          customerNumber: order.customerNumber.toString(),
-          station: `Stazione ${order.station}`,
-          items: order.items.map(item => ({
-            name: item.name,
-            quantity: item.quantity,
-            price: item.price // Mantieni formato euro (non centesimi)
-          })),
-          total: order.total
-        };
-        
-        // Genera comandi ESC/POS usando receiptGenerator
-        const printCommands = printService.receiptGenerator.generateOrderReceipt(orderData);
-        
-        // Stampa usando il metodo print() aggiornato
-        await printService.print(printCommands);
-        console.log('✅ Scontrino stampato tramite nuovo print service');
-        return; // Stampa riuscita, esci
-        
-      } catch (error) {
-        console.warn('⚠️ Errore print service:', error.message, '- uso browser print');
-      }
-    }
-    
-    /*
-    // Fallback: browser print (aggiornato per 80mm)
-    const receiptContent = `
-${'='.repeat(48)}
-          SAGRA PARROCCHIA - SCONTRINO
-${'='.repeat(48)}
-Numero: ${order.customerNumber}
-Stazione: ${order.station}
-Ora: ${new Date().toLocaleTimeString('it-IT')}
-${'-'.repeat(48)}
-${order.items.map(item => {
-  const itemLine = `${item.quantity}x ${item.name}`;
-  const price = `EUR ${item.price.toFixed(2)}`;
-  const total = `EUR ${(item.quantity * item.price).toFixed(2)}`;
-  const spacing = 48 - itemLine.length - total.length;
-  return itemLine + ' '.repeat(Math.max(1, spacing)) + total;
-}).join('\n')}
-${'-'.repeat(48)}
-${'TOTALE:'.padEnd(48 - `EUR ${order.total.toFixed(2)}`.length)}EUR ${order.total.toFixed(2)}
-${'='.repeat(48)}
-      Ritira alle cucine indicate
-    `.trim();
-    
-    const printWindow = window.open('', '_blank');
-    printWindow.document.body.innerHTML = `
-      <html>
-        <head>
-          <title>Scontrino #${order.customerNumber}</title>
-          <style>
-            body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0; }
-            .center { text-align: center; }
-            .line { border-top: 1px solid #000; margin: 5px 0; }
-          </style>
-        </head>
-        <body>
-          <pre>${receiptContent}</pre>
-        </body>
-      </html>
-    `;
-    printWindow.document.close();
-    printWindow.print();
-    printWindow.close();
-    */
   };
 
   const completeOrder = async (orderId) => {
@@ -285,6 +250,12 @@ ${'='.repeat(48)}
               </button>
             ))}
             <button
+              onClick={() => setCurrentView('monitoring')}
+              className={`nav-button ${currentView === 'monitoring' ? 'active' : ''}`}
+            >
+              📊 Monitor
+            </button>
+            <button
               onClick={() => setCurrentView('config')}
               className={`nav-button ${currentView === 'config' ? 'active' : ''}`}
             >
@@ -319,6 +290,14 @@ ${'='.repeat(48)}
           />
         )}
         
+        {currentView === 'monitoring' && (
+          <MonitoringView 
+            allOrders={allOrders}
+            printStations={printStations}
+            orderStats={orderStats}
+          />
+        )}
+        
         {currentView === 'config' && (
           <ConfigView 
             menu={menu}
@@ -329,6 +308,94 @@ ${'='.repeat(48)}
           />
         )}
       </main>
+    </div>
+  );
+};
+
+// Componente per monitoraggio stampe
+const MonitoringView = ({ allOrders, printStations, orderStats }) => {
+  return (
+    <div className="monitoring-view">
+      <div className="monitoring-header">
+        <h2>📊 Monitoraggio Sistema di Stampa</h2>
+      </div>
+      
+      {/* Statistiche */}
+      <div className="stats-grid">
+        <div className="stat-card">
+          <h3>Ordini Totali</h3>
+          <div className="stat-number">{orderStats.total}</div>
+        </div>
+        <div className="stat-card success">
+          <h3>Stampati</h3>
+          <div className="stat-number">{orderStats.printed}</div>
+        </div>
+        <div className="stat-card warning">
+          <h3>In Coda</h3>
+          <div className="stat-number">{orderStats.pending}</div>
+        </div>
+        <div className="stat-card error">
+          <h3>Errori</h3>
+          <div className="stat-number">{orderStats.failed}</div>
+        </div>
+      </div>
+      
+      {/* Stazioni di Stampa */}
+      <div className="print-stations">
+        <h3>🖨️ Stazioni di Stampa</h3>
+        <div className="stations-grid">
+          {printStations.map(station => (
+            <div key={station.id} className={`station-card ${station.online ? 'online' : 'offline'}`}>
+              <div className="station-header">
+                <h4>{station.name}</h4>
+                <span className={`status ${station.online ? 'online' : 'offline'}`}>
+                  {station.online ? '🟢 Online' : '🔴 Offline'}
+                </span>
+              </div>
+              <div className="station-info">
+                <p>Ultimo ping: {new Date(station.lastPing?.toDate()).toLocaleTimeString()}</p>
+                <p>Ordini stampati: {station.totalPrinted || 0}</p>
+              </div>
+            </div>
+          ))}
+          {printStations.length === 0 && (
+            <div className="no-stations">
+              <p>Nessuna stazione di stampa collegata</p>
+              <p>Avvia l'app print-station per vedere le stazioni qui</p>
+            </div>
+          )}
+        </div>
+      </div>
+      
+      {/* Ordini Recenti */}
+      <div className="recent-orders">
+        <h3>📝 Ordini Recenti</h3>
+        <div className="orders-list">
+          {allOrders.slice(0, 10).map(order => (
+            <div key={order.id} className={`order-card ${order.printStatus?.printed ? 'printed' : order.printStatus?.error ? 'error' : 'pending'}`}>
+              <div className="order-header">
+                <span className="customer-number">#{order.customerNumber}</span>
+                <span className="timestamp">{new Date(order.timestamp?.toDate()).toLocaleTimeString()}</span>
+                <span className={`print-status ${order.printStatus?.printed ? 'printed' : order.printStatus?.error ? 'error' : 'pending'}`}>
+                  {order.printStatus?.printed ? '✅ Stampato' : 
+                   order.printStatus?.error ? '❌ Errore' : 
+                   '⏳ In coda'}
+                </span>
+              </div>
+              <div className="order-details">
+                <p>Stazione: {order.station}</p>
+                <p>Totale: €{order.total?.toFixed(2)}</p>
+                <p>Articoli: {order.items?.length}</p>
+              </div>
+            </div>
+          ))}
+          {allOrders.length === 0 && (
+            <div className="no-orders">
+              <p>Nessun ordine trovato</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

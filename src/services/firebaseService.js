@@ -12,8 +12,7 @@ import {
   getDocs,
   setDoc
 } from 'firebase/firestore';
-import { ref, push, onValue, update, off } from 'firebase/database';
-import { db, rtdb } from '../firebase/config';
+import { db } from '../firebase/config';
 
 // Firestore Collections
 const COLLECTIONS = {
@@ -21,12 +20,6 @@ const COLLECTIONS = {
   MENU: 'menu',
   CONFIG: 'config',
   LINES: 'lines'
-};
-
-// Real-time Database paths
-const RT_PATHS = {
-  ORDERS: 'orders',
-  ORDER_STATUS: 'orderStatus'
 };
 
 export class FirebaseService {
@@ -116,17 +109,6 @@ export class FirebaseService {
         updatedAt: serverTimestamp()
       });
 
-      // Add to Real-time Database for instant updates
-      const rtOrder = {
-        ...orderData,
-        id: docRef.id,
-        createdAt: Date.now(),
-        updatedAt: Date.now()
-      };
-
-      const rtRef = ref(rtdb, `${RT_PATHS.ORDERS}/${docRef.id}`);
-      await update(rtRef, rtOrder);
-
       return docRef.id;
     } catch (error) {
       console.error('Error creating order:', error);
@@ -136,18 +118,11 @@ export class FirebaseService {
 
   async updateOrderStatus(orderId, status) {
     try {
-      // Update in Firestore
+      // Update in Firestore only
       const orderRef = doc(db, COLLECTIONS.ORDERS, orderId);
       await updateDoc(orderRef, {
         status,
         updatedAt: serverTimestamp()
-      });
-      
-      // Update in Real-time Database
-      const rtRef = ref(rtdb, `${RT_PATHS.ORDERS}/${orderId}`);
-      await update(rtRef, {
-        status,
-        updatedAt: Date.now()
       });
       
       return true;
@@ -162,10 +137,6 @@ export class FirebaseService {
       // Delete from Firestore
       await deleteDoc(doc(db, COLLECTIONS.ORDERS, orderId));
       
-      // Delete from Real-time Database
-      const rtRef = ref(rtdb, `${RT_PATHS.ORDERS}/${orderId}`);
-      await update(rtRef, null);
-      
       return true;
     } catch (error) {
       console.error('Error deleting order:', error);
@@ -174,14 +145,17 @@ export class FirebaseService {
   }
 
   subscribeToOrders(callback) {
-    const ordersRef = ref(rtdb, RT_PATHS.ORDERS);
+    // Use Firestore real-time listener instead of Realtime Database
+    const ordersQuery = query(
+      collection(db, COLLECTIONS.ORDERS),
+      orderBy('createdAt', 'desc')
+    );
     
-    const unsubscribe = onValue(ordersRef, (snapshot) => {
-      const data = snapshot.val();
-      const orders = data ? Object.values(data) : [];
-      
-      // Sort by creation time
-      orders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
+      const orders = [];
+      snapshot.forEach((doc) => {
+        orders.push({ id: doc.id, ...doc.data() });
+      });
       
       callback(orders);
     }, (error) => {
@@ -189,7 +163,7 @@ export class FirebaseService {
       callback([]);
     });
 
-    return () => off(ordersRef, 'value', unsubscribe);
+    return unsubscribe;
   }
 
   // ============ CONFIGURATION ============

@@ -1,0 +1,24 @@
+{
+  "name": "print-station",
+  "version": "1.0.0",
+  "description": "App di stampa locale che monitora Firestore per nuovi ordini",
+  "main": "src/print-station.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/print-station.js",
+    "dev": "node --watch src/print-station.js",
+    "test": "node src/test-station.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "firebase": "^10.14.1"
+  },
+  "keywords": [
+    "print",
+    "firestore",
+    "thermal-printer",
+    "sagra"
+  ],
+  "author": "",
+  "license": "MIT"
+}
