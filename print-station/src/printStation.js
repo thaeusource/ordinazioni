@@ -19,8 +19,8 @@ import {
 import { db } from './firebase/config.js';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
-import ConfigManager from './config-manager.js';
-import PrintManager from './print-manager.js';
+import ConfigManager from './configManager.js';
+import PrintManager from './printManager.js';
 import ReceiptGenerator from './receiptGenerator.js';
 
 // ES modules compatibility
@@ -188,7 +188,7 @@ class PrintStation {
             };
             
             // Genera comandi ESC/POS
-            const printCommands = this.receiptGenerator.generateOrderReceipt(orderData);
+            const printCommands = this.receiptGenerator.generateReceiptCommands(orderData);
             
             // Stampa tramite print manager
             const result = await this.printManager.printRawContent(printCommands);

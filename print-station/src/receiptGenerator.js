@@ -3,6 +3,10 @@
  * Genera comandi ESC/POS per ricevute della sagra
  */
 
+import fs from 'fs';
+import path from 'path';
+import os from 'os';
+
 // Import dei comandi ESC/POS locali
 import { 
   CONTROL, 
@@ -13,7 +17,7 @@ import {
   FEED, 
   CHARS, 
   HELPERS 
-} from './escpos-commands.js';
+} from './escposCommands.js';
 
 class ReceiptGenerator {
   constructor(config = {}) {
@@ -29,9 +33,11 @@ class ReceiptGenerator {
   }
 
   /**
-   * Genera ricevuta completa per ordine
+   * METODO DI TEST - Genera ricevuta completa con cut per linee di preparazione
+   * @param {Object} orderData - Oggetto ordine completo con linee di preparazione
+   * @returns {Array} Array di comandi ESC/POS
    */
-  generateOrderReceipt(orderData) {
+  generateReceiptCommands(orderData, useLineCuts = true) {
     const commands = [];
     
     // Inizializza
@@ -43,16 +49,168 @@ class ReceiptGenerator {
     // Informazioni ordine
     commands.push(...this.createOrderInfo(orderData));
     
-    // Lista items
+    // Sezione RIEPILOGO ORDINE
+    commands.push(...this.createOrderSummaryHeader());
+    
+    // Lista items completa
     commands.push(...this.createItemsList(orderData.items));
     
     // Totale
     commands.push(...this.createTotal(orderData.total));
     
-    // Footer
+    // Footer generale
     commands.push(...this.createFooter());
     
+    if(useLineCuts) {
+      // Genera cut per ogni linea di preparazione
+      if (orderData.items && orderData.items.length > 0) {
+        const lineItems = this.groupItemsByPreparationLine(orderData.items);
+        
+        Object.entries(lineItems).forEach(([lineName, items]) => {
+          commands.push(...this.createLineCut(lineName, items));
+        });
+      }
+    }
+    
     return commands;
+  }
+
+  /**
+   * Raggruppa items per linea di preparazione
+   */
+  groupItemsByPreparationLine(items) {
+    const grouped = {};
+    
+    items.forEach(item => {
+      const lineName = item.preparationLine || 'GENERALE';
+      if (!grouped[lineName]) {
+        grouped[lineName] = [];
+      }
+      grouped[lineName].push(item);
+    });
+    
+    return grouped;
+  }
+
+  /**
+   * Converte array di comandi in buffer per stampa
+   */
+  commandsToBuffer(commands) {
+    return Buffer.from(commands);
+  }
+
+  /**
+   * Salva comandi di stampa in un file temporaneo
+   */
+  saveCommandsToFile(commands, fileName = null) {
+    const buffer = this.commandsToBuffer(commands);
+    const tempDir = path.join(os.tmpdir(), 'print-station-receipts');
+    
+    // Crea directory se non esiste
+    if (!fs.existsSync(tempDir)) {
+      fs.mkdirSync(tempDir, { recursive: true });
+    }
+    
+    const filename = fileName || `receipt_${Date.now()}.bin`;
+    const filePath = path.join(tempDir, filename);
+    
+    fs.writeFileSync(filePath, buffer);
+    
+    return filePath;
+  }
+
+  /**
+   * Crea sezione header per riepilogo ordine
+   */
+  createOrderSummaryHeader() {
+    const commands = [];
+    
+    commands.push(...ALIGN.CENTER);
+    commands.push(...TEXT_STYLE.BOLD_ON);
+    commands.push(...this.textToBytes('RIEPILOGO ORDINE'));
+    commands.push(...TEXT_STYLE.BOLD_OFF);
+    commands.push(...ALIGN.LEFT);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    //commands.push(...this.createSeparator(this.config.itemSeparator));
+    
+    return commands;
+  }
+
+  /**
+   * Crea un cut per una linea di preparazione specifica
+   */
+  createLineCut(lineName, items) {
+    const commands = [];
+    
+    // Titolo linea centrato e grassetto
+    commands.push(...ALIGN.CENTER);
+    commands.push(...TEXT_STYLE.BOLD_ON);
+    commands.push(...TEXT_STYLE.DOUBLE_SIZE);
+    commands.push(...this.textToBytes(lineName.toUpperCase()));
+    commands.push(...TEXT_STYLE.NORMAL);
+    commands.push(...TEXT_STYLE.BOLD_OFF);
+    commands.push(...ALIGN.LEFT);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    
+    // Lista items della linea
+    items.forEach(item => {
+      const line = `${item.quantity}x ${item.name}`;
+      commands.push(...this.textToBytes(line));
+      commands.push(...FEED.ONE_LINE);
+    });
+    
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...FEED.ONE_LINE);
+    commands.push(...CUT.FULL);
+    
+    return commands;
+  }
+
+  /**
+   * METODO DI TEST - Crea un ordine di esempio per testare la funzionalità
+   */
+  static createTestOrder() {
+    return {
+      customerNumber: 42,
+      station: 'CASSA-01',
+      total: 23.50,
+      timestamp: new Date(),
+      items: [
+        {
+          id: 'pizza-margherita',
+          name: 'Pizza Margherita',
+          quantity: 2,
+          price: 6.00,
+          preparationLine: 'SALATO'
+        },
+        {
+          id: 'coca-cola',
+          name: 'Coca Cola',
+          quantity: 2,
+          price: 2.50,
+          preparationLine: 'BAR'
+        },
+        {
+          id: 'tiramisu',
+          name: 'Tiramisù',
+          quantity: 1,
+          price: 4.50,
+          preparationLine: 'DOLCE'
+        },
+        {
+          id: 'panino-porchetta',
+          name: 'Panino Porchetta',
+          quantity: 1,
+          price: 7.00,
+          preparationLine: 'SALATO'
+        }
+      ]
+    };
   }
 
   /**
@@ -96,7 +254,8 @@ class ReceiptGenerator {
     });
     
     // Separatore items
-    commands.push(...this.createSeparator(this.config.itemSeparator));
+    commands.push(...FEED.ONE_LINE);
+    //commands.push(...this.createSeparator(this.config.itemSeparator));
     
     return commands;
   }
