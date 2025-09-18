@@ -2,12 +2,12 @@
   "name": "print-station",
   "version": "1.0.0",
   "description": "App di stampa locale che monitora Firestore per nuovi ordini",
-  "main": "src/print-station.js",
+  "main": "src/printStation.js",
   "type": "module",
   "scripts": {
-    "start": "node src/print-station.js",
-    "dev": "node --watch src/print-station.js",
-    "test": "node src/test-station.js"
+    "start": "node src/printStation.js",
+    "dev": "node --watch src/printStation.js",
+    "test": "node src/testStation.js"
   },
   "dependencies": {
     "dotenv": "^16.3.1",
